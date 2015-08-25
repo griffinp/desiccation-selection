@@ -175,30 +175,32 @@ dir_path <- "/Users/pgriffin/Documents/Drosophila\ Selection\ Experiment/snp_and
 for (i in Sample_code){
   #temp_filename <- paste(dir_path, "MB_",
   #                       i, "_noN_reduced.mpileup.sync", sep="")
-  temp_filename <- paste(dir_path, i, "_sig_SNPs_sync.txt", sep="")
+  temp_filename <- paste(dir_path, i, "_fet_drift_sig_SNPs_sync.txt", sep="")
   print(paste("Reading sync file for", i, sep=" "))
   temp_table_pre <- read.table(temp_filename, header=FALSE, sep="\t",
                                stringsAsFactors=FALSE)
   for(j in chr_vector){
-    output_filename <- paste(dir_path,
-                             i, "_", j, "_sig_SNPs_150818.vcf", sep="")
-    print(paste("Subsetting", i, "for chr", j, sep=" "))
-    temp_table <- subset(temp_table_pre, temp_table_pre[,1]==j)
-    print(paste("Processing", i, "for chr", j, sep=" "))
-    temp_base_call_col_1 <- data.frame(base_calls=temp_table[,4])
-    temp_base_call_col_2 <- data.frame(base_calls=temp_table[,5])
-    majmin_calls <- extract_maj_and_min_for_2_sample_file(temp_base_call_col_1,
-                                                          temp_base_call_col_2)
-    found_alleles <- rearrange_maj_min(majmin_calls)
-    vcf_df <- data.frame(temp_table[,c(1,2)], 
-                         rep('.', times=nrow(temp_table)), 
-                         found_alleles, 
-                         rep(30, times=nrow(temp_table)), 
-                         rep('PASS', times=nrow(temp_table)), 
-                         rep('', times=nrow(temp_table)))
-    colnames(vcf_df) <- c("#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO")
-    write.table(vcf_df, file=output_filename, sep="\t", row.names=FALSE, quote=FALSE)
-    print(paste(nrow(vcf_df), " total lines written for sample ", i, " chr ", j, sep=""))
+    if(j %in% levels(as.factor(temp_table_pre[,1]))){
+      output_filename <- paste(dir_path,
+                               i, "_", j, "_fet_drift_sig_SNPs_150821.vcf", sep="")
+      print(paste("Subsetting", i, "for chr", j, sep=" "))
+      temp_table <- subset(temp_table_pre, temp_table_pre[,1]==j)
+      print(paste("Processing", i, "for chr", j, sep=" "))
+      temp_base_call_col_1 <- data.frame(base_calls=temp_table[,4])
+      temp_base_call_col_2 <- data.frame(base_calls=temp_table[,5])
+      majmin_calls <- extract_maj_and_min_for_2_sample_file(temp_base_call_col_1,
+                                                            temp_base_call_col_2)
+      found_alleles <- rearrange_maj_min(majmin_calls)
+      vcf_df <- data.frame(temp_table[,c(1,2)], 
+                           rep('.', times=nrow(temp_table)), 
+                           found_alleles, 
+                           rep(30, times=nrow(temp_table)), 
+                           rep('PASS', times=nrow(temp_table)), 
+                           rep('', times=nrow(temp_table)))
+      colnames(vcf_df) <- c("#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO")
+      write.table(vcf_df, file=output_filename, sep="\t", row.names=FALSE, quote=FALSE)
+      print(paste(nrow(vcf_df), " total lines written for sample ", i, " chr ", j, sep=""))
+    }
   }
   remove(temp_table_pre)
 }

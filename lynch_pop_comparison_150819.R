@@ -1,17 +1,17 @@
-setwd("/vlsci/VR0267/pgriffin/hsm/sandra/output_wgs/variant_calls/")
-test_file <- read.csv('MB_C1_noN_reduced_150819.mpileup.sync', sep = "\t", header=FALSE)
-output_file_prefix <- "MB_C1_drift_SNP_test_150819_"
-plot1_prefix <- "Minuslog10_p_vs_starting_freq_MB_C1_"
-plot2_prefix <- "End_freq_vs_starting_freq_MB_C1_"
+# setwd("/vlsci/VR0267/pgriffin/hsm/sandra/output_wgs/variant_calls/")
+# test_file <- read.csv('MB_C1_noN_reduced_150819.mpileup.sync', sep = "\t", header=FALSE)
+# output_file_prefix <- "MB_C1_drift_SNP_test_150819_"
+# plot1_prefix <- "Minuslog10_p_vs_starting_freq_MB_C1_"
+# plot2_prefix <- "End_freq_vs_starting_freq_MB_C1_"
 
 library(polysat)
 library("bbmle")
 
 
-#setwd("/Users/pgriffin/Documents/Drosophila Selection Experiment/pileup_and_sync_files")
-#test_file <- read.csv('MB_C1_noN_reduced_150818.mpileup.sync', sep = "\t", header=FALSE)
-#output_file_name <- "MB_C1_drift_SNP_test_150819.txt"
-#output_file_prefix <- "MB_C1_drift_SNP_test_150819_"
+setwd("/Users/pgriffin/Documents/Drosophila Selection Experiment/snp_and_gene_lists")
+test_file <- read.csv('D5_sig_SNPs_sync.txt', sep = "\t", header=FALSE)
+output_file_name <- "MB_D5_lynch_for_fet_sig_snps_150820.txt"
+output_file_prefix <- "MB_D5_lynch_for_fet_sig_snps_150820_"
 
 #############################################
 #                                           #
@@ -400,12 +400,16 @@ for (tempchr in chrs){
   #############################################
   
   #Lynch population comparison
-  lynchoutput <- data.frame(matrix(ncol=2, nrow=nrow(majmin_counts)))
-  for (eachrow in 1:nrow(majmin_counts)){
-    temprow <- majmin_counts[eachrow,]
-    templynch <- lynch_test(Ny=200, Nz=50, epsi=0.01, input_data_row=temprow)
-    lynchoutput[eachrow,] <- templynch
-  }
+  #lynchoutput <- data.frame(matrix(ncol=2, nrow=nrow(majmin_counts)))
+  lynch_output <- t(as.data.frame(apply(majmin_counts, 1, lynch_test, Ny=200, Nz=50, epsi=0.01)))
+  #for (eachrow in 1:nrow(majmin_counts)){
+  #  temprow <- majmin_counts[eachrow,]
+  #  templynch <- lynch_test(Ny=200, Nz=50, epsi=0.01, input_data_row=temprow)
+  #  lynchoutput[eachrow,] <- templynch
+  #  if(eachrow%%10000<1){
+  #    print(paste("Lynch MLE estimation performed for" eachrow, "loci"))
+  #  }
+  #}
   
   colnames(lynch_output) <- c("lynch_chi_val", "lynch_p")
 
@@ -469,7 +473,7 @@ for (tempchr in chrs){
 
   colnames(limits) <- c('start_limit', 'end_limit')
 
-  final_table <- data.frame(lowest_p, startoutput, endoutput, start_limit, end_limit)
+  final_table <- data.frame(chr_subset, startoutput, endoutput, limits)
   
   # My homemade significance test of whether
   # the allele freq change as calculated by
@@ -486,16 +490,17 @@ for (tempchr in chrs){
   tempend[which(tempstartpre > 0.5)] <- round(1-final_table$end_limit, 2)[which(tempstartpre > 0.5)]
   #make sure to sample from the right drift simulation
   if(tempchr=="dmel_mitochondrion_genome"){
-    temp_test[which(final_table[,1]=="dmel_mitochondrion_genome"),] <- Out_mito[match(as.character(tempstart), Out_mito[,1]),][which(final_table[,1]=="dmel_mitochondrion_genome"),]
+    temp_test <- Out_mito[match(as.character(tempstart), Out_mito[,1]),]
   } else {
     temp_test <- Out_nuclear[match(as.character(tempstart), Out_nuclear[,1]),]
   }
   sig_test[which(tempend < temp_test[,4] | tempend > temp_test[,5])] <- "sig"
 
-  out_tab <- data.frame(final_table, sig_test, lynchoutput)
-   
+  out_tab <- data.frame(final_table, sig_test, lynch_output)
+  #out_tab <- data.frame(tempend, temp_test[,4:5], sig_test) 
+  
   write.table(out_tab, file=output_file_name, quote=FALSE, row.names=FALSE, sep="\t")
-  rm(test_file)
+  #rm(test_file)
 }
   
 ################################################################
