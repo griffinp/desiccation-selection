@@ -1,0 +1,38 @@
+cat C1_2L_all_SNPs_150818.vcf C1_2R_all_SNPs_150818.vcf C1_3L_all_SNPs_150818.vcf C1_3R_all_SNPs_150818.vcf C1_X_all_SNPs_150818.vcf C1_dmel_mitochondrion_genome_all_SNPs_150818.vcf > C1_all_SNPs_pre.vcf 
+
+grep -v '#CHROM' C1_all_SNPs_pre.vcf > C1_all_SNPs.vcf 
+
+rm C1_all_SNPs_pre.vcf
+
+#############
+
+
+awk '
+    FNR==1 && NR!=1 { while (/^V1\tV2\tV3\tV4\tV5\tV6\tstart_obs\tstart_mle\tstart_lower\tstart_upper\tend_obs\tend_mle\tend_lower\tend_upper\tstart_limit\tend_limit\tsig_test\tlynch_chi_val\tlynch_p/) getline; }
+    1 {print}
+' MB_D5_lynch_for_fet_sig_snps_150820*.txt > D5_lynch_for_fet_sig_snps_150820.txt
+
+
+#############
+
+awk '
+    FNR==1 && NR!=1 { while (/^V1\tV2\tV3\tV4\tV5\tV6\tmain\talt\tstartfreq\tendfreq/) getline; }
+    1 {print}
+' MB_D5_all_freq_change_150821*.txt > D5_all_freq_change_150821.txt
+
+
+var="chr	pos	ref	MB_counts	C1_counts	C1_dec	C1_inc	C1_startfreq	C1_endfreq"
+sed -i '' "1s/.*/$var/" C1_test.txt
+
+# sed can't interpret tabs so instead paste the 'var' variable into the Terminal, 
+#then go through and insert tabs using ctrl+v then tab.
+
+
+############
+
+awk '
+    FNR==1 && NR!=1 { while (/^#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO/) getline; }
+    1 {print}
+' D5_*_fet_drift_sig_SNPs_150821.vcf > D5_fet_drift_sig_SNPs_150821.vcf
+
+

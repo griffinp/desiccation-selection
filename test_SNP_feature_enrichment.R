@@ -20,8 +20,8 @@ pval <- c()
 for(i in 1:nrow(dat)){
   temp_row <- dat[i,]
   
-  temp_mat <- matrix(c(temp_row$All.C1.in.category, temp_row$allout,
-                       temp_row$Sig.C1.in.category, temp_row$sigout),
+  temp_mat <- matrix(c(temp_row$All_SNPs_in_category, temp_row$allout,
+                       temp_row$Sig_SNPs_in_category, temp_row$sigout),
                      nrow=2, ncol=2)
   temp_test <- chisq.test(temp_mat)
   
