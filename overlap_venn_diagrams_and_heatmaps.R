@@ -261,7 +261,7 @@ C_gene_pres_abs_sorted <- C_gene_pres_abs[order(ordered(row.names(C_gene_pres_ab
 
 C_gene_pres_abs_sorted <- t(as.matrix(C_gene_pres_abs_sorted, row.names=row.names(C_gene_pres_abs_sorted), col.names=c("C1", "C2", "C3", "C4", "C5", "D1", "D2", "D3", "D4", "D5")))
 
-pdf("C gene overlap heatmap visualisation 150728.pdf", height=50, width=5)
+pdf("C gene overlap heatmap visualisation 150825.pdf", height=50, width=5)
 par(mar = c(5,5,4,2) + 0.1, mgp=c(3,0.2,0))
 image(z = C_gene_pres_abs_sorted, col = c("grey", "red"), axes = FALSE)
 axis(side = 2, labels = colnames(C_gene_pres_abs_sorted), 
@@ -295,7 +295,7 @@ D_gene_pres_abs_sorted <- t(as.matrix(D_gene_pres_abs_sorted,
 
 
 
-pdf("D gene overlap without C genes heatmap visualisation 150728.pdf", height=120, width=2)
+pdf("D gene overlap without C genes heatmap visualisation 150825.pdf", height=120, width=2)
 par(mar = c(5,5,4,2) + 0.1, mgp=c(3,0.2,0))
 image(z = D_gene_pres_abs_sorted, col = c("grey", "green"), axes = FALSE)
 axis(side = 2, labels = colnames(D_gene_pres_abs_sorted), 

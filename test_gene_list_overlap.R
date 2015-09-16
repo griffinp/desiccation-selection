@@ -181,8 +181,8 @@ for(i in 1:nrow(gene_list_for_conversion)){
 
 rownames(presence_count) <- gene_list_for_conversion$name
 colnames(presence_count) <- names(rearrange_iterations[[1]])
-saveRDS(presence_count, file="Gene_presence_count_in_simulated_gene_lists_150718.rds")
-presence_count <- readRDS(file="Gene_presence_count_in_simulated_gene_lists_150718.rds")
+saveRDS(presence_count, file="Gene_presence_count_in_simulated_gene_lists_150826.rds")
+presence_count <- readRDS(file="Gene_presence_count_in_simulated_gene_lists_150826.rds")
 
 pres_and_length <- cbind(presence_count, gene_list_for_conversion$total_length)
 

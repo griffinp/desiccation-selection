@@ -101,8 +101,8 @@ for (i in Sample_code){
   assign(temp_var_name, read_lynch_all_scaffolds(i))
   lynch_condition <- get(temp_var_name)$lynch_p<bonferroni_thresholds[bonferroni_thresholds$Sample_code==i,'Threshold']
   sig_after_drift_and_lynch <- subset(get(temp_var_name), get(temp_var_name)$sig_test=="sig" & lynch_condition==TRUE)
-  write.table(sig_after_drift_and_lynch[,1:5], file=output_sync_name, col.names=FALSE, row.names=FALSE, sep="\t")
-  write.table(sig_after_drift_and_lynch[,1:2], file=output_snpfile_name, col.names=FALSE, row.names=FALSE, sep="\t")
+  write.table(sig_after_drift_and_lynch[,1:5], file=output_sync_name, col.names=FALSE, row.names=FALSE, sep="\t", quote=FALSE)
+  write.table(sig_after_drift_and_lynch[,1:2], file=output_snpfile_name, col.names=FALSE, row.names=FALSE, sep="\t", quote=FALSE)
 }
 
 

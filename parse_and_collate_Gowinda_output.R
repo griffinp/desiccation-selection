@@ -124,19 +124,19 @@ for(i in Sample_code){
 
 #Once above code block has been run, all objects should be imported
 
-bodypart_90pc_output <- collate_results(list(C1_bodypart_90pc, C2_bodypart_90pc,
-                                             C3_bodypart_90pc, C4_bodypart_90pc,
-                                             C5_bodypart_90pc, D1_bodypart_90pc, 
-                                             D2_bodypart_90pc, D3_bodypart_90pc, 
-                                             D4_bodypart_90pc, D5_bodypart_90pc))
-write.table(bodypart_90pc_output, file="Bodypart_90pc_noC_D_collated.txt", quote=FALSE)
+bodypart_50pc_output <- collate_results(list(C1_bodypart_50pc, C2_bodypart_50pc,
+                                             C3_bodypart_50pc, C4_bodypart_50pc,
+                                             C5_bodypart_50pc, D1_bodypart_50pc, 
+                                             D2_bodypart_50pc, D3_bodypart_50pc, 
+                                             D4_bodypart_50pc, D5_bodypart_50pc))
+write.table(bodypart_50pc_output, file="Bodypart_50pc_noC_D_collated.txt", quote=FALSE)
 
-devstage_90pc_output <- collate_results(list(C1_devstage_90pc, C2_devstage_90pc,
-                                             C3_devstage_90pc, C4_devstage_90pc,
-                                             C5_devstage_90pc, D1_devstage_90pc, 
-                                             D2_devstage_90pc, D3_devstage_90pc, 
-                                             D4_devstage_90pc, D5_devstage_90pc))
-write.table(devstage_90pc_output, file="devstage_90pc_noC_D_collated.txt", quote=FALSE)
+devstage_50pc_output <- collate_results(list(C1_devstage_50pc, C2_devstage_50pc,
+                                             C3_devstage_50pc, C4_devstage_50pc,
+                                             C5_devstage_50pc, D1_devstage_50pc, 
+                                             D2_devstage_50pc, D3_devstage_50pc, 
+                                             D4_devstage_50pc, D5_devstage_50pc))
+write.table(devstage_50pc_output, file="devstage_50pc_noC_D_collated.txt", quote=FALSE)
 
 
 

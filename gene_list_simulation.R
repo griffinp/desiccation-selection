@@ -67,7 +67,9 @@ for (i in 1:length(resample_names)) {
                          "_all_genes_extracted.txt", sep="")
   temp_full <- read.table(temp_filename, fill=TRUE, header=FALSE, 
                           colClasses="character", col.names=colname_vector)
-  temp_full <- temp_full[temp_full$chr%in%c("2L", "2R", "3L", "3R", "X"),]
+  temp_full <- temp_full[temp_full$chr%in%c("2L", "2R", "3L", "3R", "X", "dmel_mitochondrion_genome"),]
+  # SORT BY CHR AND POS! 
+  temp_full <- temp_full[with(temp_full, order(temp_full$chr, as.integer(temp_full$pos))),]
   temp_full$chrpos <- paste(temp_full$chr, temp_full$pos, sep="_")
   temp_sig <- get(paste(temp_name, "_sig_ex", sep=""))
   temp_sig$chrpos <- paste(temp_sig$chr, temp_sig$pos, sep="_")

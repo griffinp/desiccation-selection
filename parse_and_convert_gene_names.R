@@ -140,50 +140,50 @@ D5_noC_sig_gene_names <- setdiff(D5_sig_gene_names_exons_parsed, C_sig_gene_name
 # NB had to edit these files slightly to remove hash from start of header row
 # can't rely on col numbers as these vary among files!
 
-rm(gene_list_for_conversion)
-for (i in 1:10){
-  temp_sample <- Sample_code[i]
-  temp_file_name <- paste("/Users/pgriffin/Documents/Drosophila Selection Experiment/snp_and_gene_lists/snpEff_genes_", 
-                          temp_sample, "_sig.txt", sep="")
-  temp_file <- read.table(temp_file_name, header=TRUE, 
-                          stringsAsFactors=FALSE, sep="\t",
-                          nrows=18000, quote="\"")
-  print(paste(nrow(temp_file), "rows in", temp_sample))
-  #Fix the 'Exon' rows, which had a column missing
-  ## NB apparently no longer necessary once I specified tab-delimited input
-#   exon_row_numbers <- grep('Exon', temp_file[,2])
-#   fixing_exon_rows <- cbind(temp_file[exon_row_numbers,1:2],
-#                             rep(NA, times=length(exon_row_numbers)),
-#                             temp_file[exon_row_numbers,3:ncol(temp_file)])
-#   temp_file[exon_row_numbers,] <- fixing_exon_rows
-  temp_subs <- temp_file[,c('GeneId', 'GeneName', 
-                            'Length..DOWNSTREAM.',
-                            'Length..GENE.',
-                            'Length..UPSTREAM.')]
-  if(temp_sample=="C1"){
-    gene_list_for_conversion <- temp_subs
-  } else {
-    gene_list_for_conversion <- rbind(gene_list_for_conversion, temp_subs)
-  }
-}
-colnames(gene_list_for_conversion) <- c("FBgn", "name", "downstream_length", 
-                                        "gene_length", "upstream_length")
-nrow(gene_list_for_conversion)
-gene_list_for_conversion[,3] <- as.integer(gene_list_for_conversion[,3])
-gene_list_for_conversion[,4] <- as.integer(gene_list_for_conversion[,4])
-gene_list_for_conversion[,5] <- as.integer(gene_list_for_conversion[,5])
-gene_list_for_conversion <- unique(gene_list_for_conversion)
-nrow(gene_list_for_conversion)
-gene_list_for_conversion$total_length <- gene_list_for_conversion$downstream_length + gene_list_for_conversion$gene_length + gene_list_for_conversion$upstream_length
-
-### Have to replace brackets in (some) gene names with underscores
-### to match the way these are writen in the snpEff output.
-gtest <- gsub("(", "_", gene_list_for_conversion$name, fixed=TRUE)
-gtest2 <- gsub(")", "_", gtest, fixed=TRUE)
-gene_list_for_conversion$name <- gtest2
-
-write.table(gene_list_for_conversion, file="All_sig_gene_list_for_name_conversion.txt",
-            sep="\t", quote=FALSE, row.names=FALSE)
+# rm(gene_list_for_conversion)
+# for (i in 1:10){
+#   temp_sample <- Sample_code[i]
+#   temp_file_name <- paste("/Users/pgriffin/Documents/Drosophila Selection Experiment/snp_and_gene_lists/snpEff_genes_", 
+#                           temp_sample, "_sig.txt", sep="")
+#   temp_file <- read.table(temp_file_name, header=TRUE, 
+#                           stringsAsFactors=FALSE, sep="\t",
+#                           nrows=18000, quote="\"")
+#   print(paste(nrow(temp_file), "rows in", temp_sample))
+#   #Fix the 'Exon' rows, which had a column missing
+#   ## NB apparently no longer necessary once I specified tab-delimited input
+# #   exon_row_numbers <- grep('Exon', temp_file[,2])
+# #   fixing_exon_rows <- cbind(temp_file[exon_row_numbers,1:2],
+# #                             rep(NA, times=length(exon_row_numbers)),
+# #                             temp_file[exon_row_numbers,3:ncol(temp_file)])
+# #   temp_file[exon_row_numbers,] <- fixing_exon_rows
+#   temp_subs <- temp_file[,c('GeneId', 'GeneName', 
+#                             'Length..DOWNSTREAM.',
+#                             'Length..GENE.',
+#                             'Length..UPSTREAM.')]
+#   if(temp_sample=="C1"){
+#     gene_list_for_conversion <- temp_subs
+#   } else {
+#     gene_list_for_conversion <- rbind(gene_list_for_conversion, temp_subs)
+#   }
+# }
+# colnames(gene_list_for_conversion) <- c("FBgn", "name", "downstream_length", 
+#                                         "gene_length", "upstream_length")
+# nrow(gene_list_for_conversion)
+# gene_list_for_conversion[,3] <- as.integer(gene_list_for_conversion[,3])
+# gene_list_for_conversion[,4] <- as.integer(gene_list_for_conversion[,4])
+# gene_list_for_conversion[,5] <- as.integer(gene_list_for_conversion[,5])
+# gene_list_for_conversion <- unique(gene_list_for_conversion)
+# nrow(gene_list_for_conversion)
+# gene_list_for_conversion$total_length <- gene_list_for_conversion$downstream_length + gene_list_for_conversion$gene_length + gene_list_for_conversion$upstream_length
+# 
+# ### Have to replace brackets in (some) gene names with underscores
+# ### to match the way these are writen in the snpEff output.
+# gtest <- gsub("(", "_", gene_list_for_conversion$name, fixed=TRUE)
+# gtest2 <- gsub(")", "_", gtest, fixed=TRUE)
+# gene_list_for_conversion$name <- gtest2
+# 
+# write.table(gene_list_for_conversion, file="All_sig_gene_list_for_name_conversion.txt",
+#             sep="\t", quote=FALSE, row.names=FALSE)
 
 
 ##### NOW REPEATING WITH 'ALL' FILES ######
@@ -191,7 +191,7 @@ write.table(gene_list_for_conversion, file="All_sig_gene_list_for_name_conversio
 #rm(gene_list_for_conversion)
 for (i in 1:10){
   temp_sample <- Sample_code[i]
-  temp_file_name <- paste("/Users/pgriffin/Documents/Drosophila Selection Experiment/snp_and_gene_lists/snpEff_genes_", 
+  temp_file_name <- paste("/Users/pgriffin/Documents/Drosophila Selection Experiment/snpeff_SNP_feature_enrichment/snpEff_genes_", 
                           temp_sample, "_all.txt", sep="")
   temp_file <- read.table(temp_file_name, header=TRUE, 
                           stringsAsFactors=FALSE, sep="\t", quote="\"")
@@ -242,7 +242,7 @@ exon_for_conv <- read.table("/Users/pgriffin/Documents/Drosophila\ Selection\ Ex
 
 # Importing the name to FBgn conversion table as well (object created above):
 
-gene_list_for_conversion <- read.table("/Users/pgriffin/Documents/Drosophila\ Selection\ Experiment/snp_and_gene_lists/All_sig_gene_list_for_name_conversion.txt",
+gene_list_for_conversion <- read.table("/Users/pgriffin/Documents/Drosophila\ Selection\ Experiment/snp_and_gene_lists/All_gene_list_for_name_conversion.txt",
                                        header=TRUE, stringsAsFactors=FALSE, sep="\t", quote="\"")
 
 gene_name_to_FBgn <- function(to_translate, conversion_table, exon_translation){

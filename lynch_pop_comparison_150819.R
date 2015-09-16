@@ -4,12 +4,12 @@
 # plot1_prefix <- "Minuslog10_p_vs_starting_freq_MB_C1_"
 # plot2_prefix <- "End_freq_vs_starting_freq_MB_C1_"
 
-library(polysat)
+#library(polysat)
 library("bbmle")
 
 
 setwd("/Users/pgriffin/Documents/Drosophila Selection Experiment/snp_and_gene_lists")
-test_file <- read.csv('D5_sig_SNPs_sync.txt', sep = "\t", header=FALSE)
+test_file <- read.csv('D5_fet_sig_SNPs_sync.txt', sep = "\t", header=FALSE)
 output_file_name <- "MB_D5_lynch_for_fet_sig_snps_150820.txt"
 output_file_prefix <- "MB_D5_lynch_for_fet_sig_snps_150820_"
 
@@ -491,8 +491,16 @@ for (tempchr in chrs){
   #make sure to sample from the right drift simulation
   if(tempchr=="dmel_mitochondrion_genome"){
     temp_test <- Out_mito[match(as.character(tempstart), Out_mito[,1]),]
+    #special treatment for starting allele freq of 0
+    for(z in which(as.character(tempstart)=='0')){
+      temp_test[z,] <- Out_mito[which(Out_mito[,1]=='0.01'),]
+    }
   } else {
     temp_test <- Out_nuclear[match(as.character(tempstart), Out_nuclear[,1]),]
+    #special treatment for starting allele freq of 0
+    for(z in which(as.character(tempstart)=='0')){
+      temp_test[z,] <- Out_nuclear[which(Out_nuclear[,1]=='0.01'),]
+    }
   }
   sig_test[which(tempend < temp_test[,4] | tempend > temp_test[,5])] <- "sig"
 
