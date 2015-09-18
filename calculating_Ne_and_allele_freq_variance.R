@@ -264,4 +264,146 @@ dev.off()
 
 write.table(Ne_results, file="Ne_calculations.txt", sep="\t", quote=FALSE, row.names=FALSE)
 
-#Look at the Ne values across the gen0—C rep vs gen0—D rep comparisons to test hypothesis
+########################
+# Now looking at the   #
+# per-locus variance   #
+# in final allele freq #
+########################
+
+# for each of the D, C and random sets:
+
+# calculate variance over D reps,
+# calculate mean allele frequency q (from gen13, ignoring gen0) and use with the correction
+# standardized_variance=variance/(q*(1-q))
+# also try correcting for starting allele frequency
+# standardized_variance_2=variance(a0(1-q0))
+
+
+calculate_overall_allele_freq_variance <- function(input_table, MB_col, 
+                                           focal_cols, SNP_set, rep_category){
+  cols_to_use <- input_table[,focal_cols]
+  raw_variance <- apply(cols_to_use, 1, var)
+  raw_mean <- apply(cols_to_use, 1, mean)
+  standardized_variance <- raw_variance/(raw_mean*(1-raw_mean))
+  mean_standardized_variance <- mean(standardized_variance, na.rm=TRUE)
+  sd_standardized_variance <- sd(standardized_variance, na.rm=TRUE)
+  variance_results <- data.frame(col1=mean_standardized_variance, col2=sd_standardized_variance, 
+                                 col3=SNP_set, col4=rep_category)
+  colnames(variance_results) <- c("mean_standardized_variance", "sd_standardized_variance", "SNP_set", "rep_category")
+  return(variance_results)
+  
+}
+
+calculate_binned_allele_freq_variance <- function(input_table, MB_col, focal_cols,
+                                                  SNP_set, rep_category){
+  
+  cols_to_use <- input_table[,focal_cols]
+  raw_variance <- apply(cols_to_use, 1, var)
+  raw_mean <- apply(cols_to_use, 1, mean)
+  standardized_variance <- raw_variance/(raw_mean*(1-raw_mean))
+  start_standardized_variance <- raw_variance/(input_table[,MB_col]*(1-input_table[,MB_col]))
+  is.na(start_standardized_variance) <- sapply(start_standardized_variance, is.infinite)
+  
+  start_set_to_0.5 <- input_table[,MB_col]
+  start_set_to_0.5[which(start_set_to_0.5 > 0.5)] <- 1-input_table[which(start_set_to_0.5 > 0.5),1]
+  bins <- c(-0.0001, seq(0.05, 0.5, length=10))
+  bins_to_use <- cut(start_set_to_0.5, breaks=bins, labels=as.character(bins[2:11]))
+  
+  mean_raw_var_binned <- tapply(raw_variance, INDEX=bins_to_use, FUN=mean, na.rm=TRUE)
+  sd_raw_var_binned <- tapply(raw_variance, INDEX=bins_to_use, FUN=sd, na.rm=TRUE)
+  mean_standardized_var_binned <- tapply(standardized_variance, INDEX=bins_to_use, FUN=mean, na.rm=TRUE)
+  sd_standardized_var_binned <- tapply(standardized_variance, INDEX=bins_to_use, FUN=sd, na.rm=TRUE)
+  #count_binned <-tapply(is.na(Dset_Dreps_standardized_variance)==FALSE, INDEX=Dset_bins, length)
+  
+  
+  mean_start_standardized_var_binned <- tapply(start_standardized_variance, INDEX=bins_to_use, FUN=mean, na.rm=TRUE)
+  sd_start_standardized_var_binned <- tapply(start_standardized_variance, INDEX=bins_to_use, FUN=sd, na.rm=TRUE)
+  
+  binned_variance_results <- data.frame(bins[2:11], rep(SNP_set, times=10), 
+                                        rep(rep_category, times=10), 
+                                        mean_raw_var_binned, sd_raw_var_binned, 
+                                        mean_standardized_var_binned, sd_standardized_var_binned,
+                                        mean_start_standardized_var_binned,
+                                        sd_start_standardized_var_binned)
+  colnames(binned_variance_results) <- c("bins", "SNP_set", 
+                                         "rep_category", "mean_raw_var", 
+                                         "sd_raw_var", "mean_standardized_var", 
+                                         "sd_standardized_var",
+                                         "mean_start_standardized_var", "sd_start_standardized_var")
+  return(binned_variance_results)
+}
+
+Dset_Dreps_overall <- calculate_overall_allele_freq_variance(all_D_se, 1, 7:11, "des", "D")
+Dset_Creps_overall <- calculate_overall_allele_freq_variance(all_D_se, 1, 2:6, "des", "C")
+Cset_Dreps_overall <- calculate_overall_allele_freq_variance(all_C_se, 1, 7:11, "lab", "D")
+Cset_Creps_overall <- calculate_overall_allele_freq_variance(all_C_se, 1, 2:6, "lab", "C")
+
+Dset_Dreps_binned <- calculate_binned_allele_freq_variance(all_D_se, 1, 7:11, "des", "D")
+Dset_Creps_binned <- calculate_binned_allele_freq_variance(all_D_se, 1, 2:6, "des", "C")
+Cset_Dreps_binned <- calculate_binned_allele_freq_variance(all_C_se, 1, 7:11, "lab", "D")
+Cset_Creps_binned <- calculate_binned_allele_freq_variance(all_C_se, 1, 2:6, "lab", "C")
+
+#for the random subset:
+# first filter out loci with potential sequencing error issues
+rset_pre_q <- apply(random_se[,2:11], 1, mean)
+rset_to_use <- random_se[which((rset_pre_q>0.04&rset_pre_q<0.96)|(random_se[,1]>0.01&random_se[,1]<0.99)),]
+
+rset_Dreps_overall <- calculate_overall_allele_freq_variance(rset_to_use, 1, 7:11, "neutral", "D")
+rset_Creps_overall <- calculate_overall_allele_freq_variance(rset_to_use, 1, 2:6, "neutral", "C")
+
+rset_Dreps_binned <- calculate_binned_allele_freq_variance(rset_to_use, 1, 7:11, "neutral", "D")
+rset_Creps_binned <- calculate_binned_allele_freq_variance(rset_to_use, 1, 2:6, "neutral", "C")
+
+
+variance_results <- rbind(Dset_Dreps_overall, Dset_Creps_overall,
+                          Cset_Dreps_overall, Cset_Creps_overall,
+                          rset_Dreps_overall, rset_Creps_overall)
+
+binned_variance_results <- rbind(Dset_Dreps_binned, Dset_Creps_binned,
+                                 Cset_Dreps_binned, Cset_Creps_binned,
+                                 rset_Dreps_binned, rset_Creps_binned)
+
+variance_plot <- ggplot(data=variance_results, aes(x=SNP_set, y=mean_standardized_variance)) + 
+  geom_point(aes(colour=factor(rep_category), size=2)) + 
+  scale_colour_manual(values=c(rgb(255, 0, 0, 100, maxColorValue=255), rgb(0, 0, 255, 100, maxColorValue=255))) +
+  theme(legend.position="none")
+
+dodge <- position_dodge(width=0.9) 
+variance_plot_2 <- qplot(SNP_set, mean_standardized_variance, fill=factor(rep_category), data=variance_results, geom="bar", position="dodge", stat="identity") +
+  geom_linerange(aes(ymax=mean_standardized_variance+sd_standardized_variance, ymin=mean_standardized_variance-sd_standardized_variance), position=dodge)+
+  scale_fill_manual(values=c(rgb(255, 0, 0, 100, maxColorValue=255), rgb(0, 0, 255, 100, maxColorValue=255))) +
+  theme_bw()
+
+
+pdf(file="Variance in allele freq among replicate lines.pdf", height=5, width=5)
+variance_plot
+dev.off()
+
+pdf(file="Variance in allele freq among replicate lines barplot.pdf", height=5, width=5)
+variance_plot_2
+dev.off()
+
+binned_variance_results$bins<-as.numeric(binned_variance_results$bins)
+
+binned_variance_plot <- ggplot(data=binned_variance_results, aes(x=bins, y=mean_standardized_var)) + 
+  geom_point(aes(colour=factor(rep_category), size=2)) + 
+  scale_colour_manual(values=c(rgb(255, 0, 0, 100, maxColorValue=255), rgb(0, 0, 255, 100, maxColorValue=255))) +
+#  geom_linerange(aes(ymax=mean_variance+sd_variance, ymin=mean_variance-sd_variance), position=dodge)+
+  facet_grid(~SNP_set) +
+  theme(legend.position="none")
+
+binned_raw_variance_plot <- ggplot(data=binned_variance_results, aes(x=bins, y=mean_raw_var)) + 
+  geom_point(aes(colour=factor(rep_category), size=2)) + 
+  scale_colour_manual(values=c(rgb(255, 0, 0, 100, maxColorValue=255), rgb(0, 0, 255, 100, maxColorValue=255))) +
+  #  geom_linerange(aes(ymax=mean_variance+sd_variance, ymin=mean_variance-sd_variance), position=dodge)+
+  facet_grid(~SNP_set) +
+  theme(legend.position="none")
+
+binned_start_variance_plot <- ggplot(data=binned_variance_results, aes(x=bins, y=mean_start_standardized_var)) + 
+  geom_point(aes(colour=factor(rep_category), size=2)) + 
+  scale_colour_manual(values=c(rgb(255, 0, 0, 100, maxColorValue=255), rgb(0, 0, 255, 100, maxColorValue=255))) +
+  #  geom_linerange(aes(ymax=mean_variance+sd_variance, ymin=mean_variance-sd_variance), position=dodge)+
+  facet_grid(~SNP_set) +
+  theme(legend.position="none")
+
+

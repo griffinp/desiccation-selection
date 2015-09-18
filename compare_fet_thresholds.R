@@ -14,3 +14,7 @@ plot2 <- ggplot(data=thresholds, aes(x=min_coverage, y=no_snps_called,
   geom_line() +
   facet_wrap(~min_count) +
   theme(legend.position = "none")
+
+pdf("SNPs_called_versus_min_coverage.pdf", height=6, width=8)
+plot2
+dev.off()

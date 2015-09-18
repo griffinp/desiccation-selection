@@ -483,7 +483,11 @@ dev.off()
 
 setwd('/Users/pgriffin/Documents/Drosophila\ Selection\ Experiment/allele_frequency_difference_testing')
 
-
+stats_table <- data.frame(focal_sample=character(), focal_sample_cat=character(),
+                          comp_sample=character(), comp_sample_cat=character(),
+                          prop_loci_above_zero=numeric(), stringsAsFactors=FALSE)
+t_test_table <- data.frame(focal_sample=character(), groupCmean=numeric(), 
+                           groupDmean=numeric(), pval=numeric(), stringsAsFactors=FALSE)
 for(j in Sample_code){
   temp_freq <- read.table(paste(j, '_freq_table.txt', sep=""), header=FALSE, sep="\t",
                         stringsAsFactors=FALSE)
@@ -538,7 +542,32 @@ for(j in Sample_code){
   temp_likert <- net_stacked(prelik, j=j)
   assign(paste(j, "likert", sep="_"), temp_likert)
   
-  
+  #add info to table for statistical test
+  if(j%in%Sample_code[1:5]){ focal_category <- "C"} else {focal_category <- "D"}
+  temp_cols <- prelik[,-which(colnames(prelik)==j)]
+  for(k in 1:9){
+    temp_comparison_col <- temp_cols[,k]
+    comp_sample <- colnames(temp_cols)[k]
+    if(comp_sample%in%Sample_code[1:5]){ focal_comp_category <- "C"} else {focal_comp_category <- "D"}
+    pos_proportion <- length(which(temp_comparison_col%in%c("0 < x < 0.1", "0.1 < x < 1")))/length(temp_comparison_col)
+    new_row <- list(j, focal_category, comp_sample, focal_comp_category, pos_proportion)
+    if(nrow(stats_table) < 1){
+      stats_table[1,] <- new_row
+    } else {
+      stats_table <- rbind(stats_table, new_row)
+    }
+  }
+  stats_for_ttest <- subset(stats_table, stats_table$focal_sample==j)
+  ttest <- t.test(prop_loci_above_zero~comp_sample_cat, data=stats_for_ttest)
+  groupCmean <- ttest$estimate[1]
+  groupDmean <- ttest$estimate[2]
+  pval <- ttest$p.value
+  new_row2 <- list(j, groupCmean, groupDmean, pval)
+  if(nrow(t_test_table) < 1){
+    t_test_table[1,] <- new_row2
+  } else {
+    t_test_table <- rbind(t_test_table, new_row2)
+  }
   
 #   prelik2 <- reshape(prelik, idvar="Sample",
 #                      varying=list("C1", "C2", "C3", "C4", "C5",
@@ -589,6 +618,12 @@ for(j in Sample_code){
   
 }
 
+write.table(stats_table, file="Proportion_loci_changing_in_same_dirn_as_focal_sample.txt",
+            sep="\t", quote=FALSE, row.names=FALSE)
+write.table(t_test_table, file="T_test_results_for_individual_focal_sample_SNP_sets.txt",
+            sep="\t", quote=FALSE, row.names=FALSE)
+
+
 #### Likert plot for all 10 samples
 
 pdf("Likert plots for all sig. SNP sets.pdf", width=11, height=28)
@@ -598,7 +633,11 @@ multiplot(C1_likert, C2_likert, C3_likert, C4_likert, C5_likert,
 dev.off()
 
 
+# ANOVA on proportion of loci showing positive freq change
 
+aov1 <- aov(prop_loci_above_zero~focal_sample_cat*comp_sample_cat, data=stats_table)
+
+glm1 <- glm(prop_loci_above_zero~focal_sample_cat*comp_sample_cat, data=stats_table)
 
 ##################
 #
