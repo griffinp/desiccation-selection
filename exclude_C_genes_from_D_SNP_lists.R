@@ -74,6 +74,7 @@ remove_C_SNPs_from_D_file <- function(input_filename, C_SNP_table){
 }
 
 setwd('/Users/pgriffin/Documents/Drosophila Selection Experiment/snp_and_gene_lists')
+write.table(allC_coords, file="Putative_lab_adaptation_gene_coords_plus_1000_bp.txt", quote=FALSE, row.names=FALSE)
 
 remove_C_SNPs_from_D_file("D1_sig_SNPs.txt", allC_coords)
 remove_C_SNPs_from_D_file("D2_sig_SNPs.txt", allC_coords)

@@ -361,8 +361,37 @@ write.table(D4_noC_sig_gene_names_FBgn, file="D4_noC_sig_gene_names_FBgn_format.
 write.table(D5_noC_sig_gene_names_FBgn, file="D5_noC_sig_gene_names_FBgn_format.txt", quote=FALSE,
             row.names=FALSE, col.names=FALSE)
 
+################################
+# Output gene name lists for   #
+# Appendix S2 (candidate genes #
+# and vector indicating which  #
+# occur in control replicates) #
+################################
+
+setwd("~/Documents/Drosophila Selection Experiment/snp_and_gene_lists")
+
+# Obtain full list of sig C genes
+
+C_sig_genes <- read.csv('Putative_lab_adaptation_gene_list.txt', header=FALSE,
+                        stringsAsFactors=FALSE)[,1]
+
+# Now get real gene lists (again, before removing C genes, and after exon parsing)
+for(i in Sample_code[1:10]){
+  if(i %in% c('D1', 'D2', 'D3', 'D4', 'D5')){
+    temp_input_name <- paste('/Users/pgriffin/Documents/Drosophila Selection Experiment/snp_and_gene_lists/',
+                             i, '_sig_withC_gene_list.txt', sep="")
+  } else{
+    temp_input_name <- paste('/Users/pgriffin/Documents/Drosophila Selection Experiment/snp_and_gene_lists/',
+                             i, '_sig_gene_list.txt', sep="")
+  }
+  temp_file <- read.csv(temp_input_name, header=FALSE, stringsAsFactors=FALSE)[,1]
+  temp_object_name <- paste(i, '_sig_gene_names', sep="")
+  assign(temp_object_name, temp_file)
+}
+
 #saving data to the clipboard
-tempdata <- cbind(D5_sig_gene_names_exons_parsed, D5_sig_gene_names_exons_parsed%in%C_sig_gene_names)
+tempdata <- cbind(D5_sig_gene_names, D5_sig_gene_names%in%C_sig_genes)
+colnames(tempdata) <- c("gene name", "putative lab-adaptation gene")
 clip <- pipe("pbcopy", "w")                       
-write.table(tempdata, file=clip, col.names=FALSE, row.names=FALSE)                               
+write.table(tempdata, file=clip, col.names=TRUE, row.names=FALSE, sep="\t")                               
 close(clip)

@@ -19,6 +19,12 @@ test_if_gene_in_list <- function(gene_list, gene){
   } else {return(FALSE)}
 }
 
+test_if_gene_in_D_or_C_lists <- function(gene_name, gene_lists){
+  present <- unlist(lapply(gene_lists, test_if_gene_in_list, gene=gene_name))
+  #output <- cbind(names(gene_lists), present)
+  return(present)
+}
+
 ########
 # MAIN #
 ########
@@ -93,6 +99,49 @@ D2_D3_D4_D5<-intersect(intersect(D2_noC_gene_names, D3_noC_gene_names),
 D1_D2_D3_D4_D5<-intersect(intersect(D1_noC_gene_names, D2_noC_gene_names), 
                           intersect(intersect(D3_noC_gene_names, D4_noC_gene_names), D5_noC_gene_names))
 
+C1_C2<-intersect(C1_sig_gene_names, C2_sig_gene_names)
+C1_C3<-intersect(C1_sig_gene_names, C3_sig_gene_names)
+C1_C4<-intersect(C1_sig_gene_names, C4_sig_gene_names)
+C1_C5<-intersect(C1_sig_gene_names, C5_sig_gene_names)
+C2_C3<-intersect(C2_sig_gene_names, C3_sig_gene_names)
+C2_C4<-intersect(C2_sig_gene_names, C4_sig_gene_names)
+C2_C5<-intersect(C2_sig_gene_names, C5_sig_gene_names)
+C3_C4<-intersect(C3_sig_gene_names, C4_sig_gene_names)
+C3_C5<-intersect(C3_sig_gene_names, C5_sig_gene_names)
+C4_C5<-intersect(C4_sig_gene_names, C5_sig_gene_names)
+C1_C2_C3<-intersect(intersect(C1_sig_gene_names, C2_sig_gene_names), C3_sig_gene_names)
+C1_C2_C4<-intersect(intersect(C1_sig_gene_names, C2_sig_gene_names), C4_sig_gene_names)
+C1_C2_C5<-intersect(intersect(C1_sig_gene_names, C2_sig_gene_names), C5_sig_gene_names)
+C1_C3_C4<-intersect(intersect(C1_sig_gene_names, C3_sig_gene_names), C4_sig_gene_names)
+C1_C3_C5<-intersect(intersect(C1_sig_gene_names, C3_sig_gene_names), C5_sig_gene_names)
+C1_C4_C5<-intersect(intersect(C1_sig_gene_names, C4_sig_gene_names), C5_sig_gene_names)
+C2_C3_C4<-intersect(intersect(C2_sig_gene_names, C3_sig_gene_names), C4_sig_gene_names)
+C2_C3_C5<-intersect(intersect(C2_sig_gene_names, C3_sig_gene_names), C5_sig_gene_names)
+C2_C4_C5<-intersect(intersect(C2_sig_gene_names, C4_sig_gene_names), C5_sig_gene_names)
+C3_C4_C5<-intersect(intersect(C3_sig_gene_names, C4_sig_gene_names), C5_sig_gene_names)
+C1_C2_C3_C4<-intersect(intersect(C1_sig_gene_names, C2_sig_gene_names), 
+                       intersect(C3_sig_gene_names, C4_sig_gene_names))
+C1_C2_C3_C5<-intersect(intersect(C1_sig_gene_names, C2_sig_gene_names),
+                       intersect(C3_sig_gene_names, C5_sig_gene_names))
+C1_C2_C4_C5<-intersect(intersect(C1_sig_gene_names, C2_sig_gene_names),
+                       intersect(C4_sig_gene_names, C5_sig_gene_names))
+C1_C3_C4_C5<-intersect(intersect(C1_sig_gene_names, C3_sig_gene_names),
+                       intersect(C4_sig_gene_names, C5_sig_gene_names))
+C2_C3_C4_C5<-intersect(intersect(C2_sig_gene_names, C3_sig_gene_names),
+                       intersect(C4_sig_gene_names, C5_sig_gene_names))
+C1_C2_C3_C4_C5<-intersect(intersect(C1_sig_gene_names, C2_sig_gene_names), 
+                          intersect(intersect(C3_sig_gene_names, C4_sig_gene_names), C5_sig_gene_names))
+
+
+# Figure out whether a gene of interest is present in each D list or the full C list
+
+gene_lists <- list(D1_noC_gene_names, D2_noC_gene_names,
+                   D3_noC_gene_names, D4_noC_gene_names,
+                   D5_noC_gene_names, C_sig_genes)
+names(gene_lists) <- c("D1", "D2", "D3", "D4", "D5", "allC")
+
+test_if_gene_in_D_or_C_lists(gene_lists=gene_lists, gene_name="slo")
+
 
 ###### FIGURE S7 ######
 
@@ -134,6 +183,47 @@ for(i in 1:length(allcombns)){
 }
 dev.off() 
 
+######## Figure showing histograms of simulated overlap for C replicates ########
+
+setwd("/Users/pgriffin/Documents/Drosophila Selection Experiment/gene_list_overlap_testing/")
+
+pdf("Histograms of simulated gene number overlap for C replicates, resampling with position.pdf", width=28, height=16)
+par(mfcol=c(4,7))
+C_names <- Sample_code[1:5]
+combn2 <- combn(C_names, 2)
+combn2a <- apply(combn2, 2, paste, collapse="_")
+combn3 <- combn(C_names, 3)
+combn3a <- apply(combn3, 2, paste, collapse="_")
+combn4 <- combn(C_names, 4)
+combn4a <- apply(combn4, 2, paste, collapse="_")
+combn5 <- "C1_C2_C3_C4_C5"
+allcombns <- c(combn2a, combn3a, combn4a, combn5)
+for(i in 1:length(allcombns)){
+  temp_combn <- allcombns[i]
+  real_overlap_length <- length(get(temp_combn))
+  temp_all_list <- lapply(exons_parsed, "[[", i+42)
+  temp_dist <- sapply(temp_all_list, length)
+  
+  multiplier <- hist(temp_dist, plot=FALSE)$counts / hist(temp_dist, plot=FALSE)$density
+  mydensity <- density(temp_dist)
+  mydensity$y <- mydensity$y * multiplier[1] 
+  
+  hist(temp_dist, main="", ylim=c(0, 380), xlim=c(0, 40),
+       xlab=paste("No. genes in", temp_combn, "overlap", sep=" "))
+  lines(mydensity)
+  lines(x=c(real_overlap_length, real_overlap_length),
+        y=c(0, 225), col="red")
+  myx <- seq(min(temp_dist), max(temp_dist), length = 100)
+  normal <- dnorm(x=myx, mean = mean(temp_dist), sd = sd(temp_dist))
+  lines(myx, normal * multiplier[1], col = "blue", lwd = 1)
+  normless <- pnorm(q = real_overlap_length, mean=mean(temp_dist), sd=sd(temp_dist))
+  #pval <- (1-normless)*2
+  text(x=real_overlap_length, y=275, labels=signif(normless, 3))
+  text(x=2, y=300, labels=LETTERS[i], cex=2)
+}
+dev.off() 
+
+
 #######################
 # Investigating gene  #
 # length and its      #
@@ -144,7 +234,8 @@ dev.off()
 
 
 gene_list_for_conversion <- read.table(file="All_gene_list_for_name_conversion.txt",
-                                        sep="\t", stringsAsFactors=FALSE, header=TRUE)
+                                        sep="\t", stringsAsFactors=FALSE, header=TRUE,
+                                       quote="\"")
 
 
 
@@ -158,6 +249,7 @@ gene_list_for_conversion <- read.table(file="All_gene_list_for_name_conversion.t
 
 #find count of resampled lists that each gene appears in
 
+nIter=1000
 
 presence_count <- matrix(NA, nrow=nrow(gene_list_for_conversion), 
                          ncol=68)
@@ -180,7 +272,7 @@ for(i in 1:nrow(gene_list_for_conversion)){
 
 
 rownames(presence_count) <- gene_list_for_conversion$name
-colnames(presence_count) <- names(rearrange_iterations[[1]])
+colnames(presence_count) <- names(exons_parsed[[1]])
 saveRDS(presence_count, file="Gene_presence_count_in_simulated_gene_lists_150826.rds")
 presence_count <- readRDS(file="Gene_presence_count_in_simulated_gene_lists_150826.rds")
 
@@ -214,7 +306,7 @@ name_vector <- c("C1_sig_gene_names","C2_sig_gene_names",
 )
 ####### FIGURE S9 ########
 
-jpeg(file="Gene sampling frequency vs length 150718.jpeg", width=15, height=18,
+jpeg(file="Gene sampling frequency vs length 151011.jpeg", width=15, height=18,
      units="in", res=300)
 par(mfcol=c(7,6))
 for(i in 1:42){
@@ -243,7 +335,7 @@ for(i in 1:42){
 dev.off()
 
 
-jpeg(file="Gene sampling frequency density 150718.jpeg", width=15, height=18,
+jpeg(file="Gene sampling frequency density 151011.jpeg", width=15, height=18,
      units="in", res=300)
 par(mfcol=c(7,6))
 for(i in 1:42){
@@ -263,7 +355,7 @@ for(i in 1:42){
 }
 dev.off()
 
-jpeg(file="Gene sampling length density.jpeg", width=15, height=18,
+jpeg(file="Gene sampling length density 151011.jpeg", width=15, height=18,
      units="in", res=300)
 par(mfcol=c(7,6))
 for(i in 1:42){
@@ -284,7 +376,7 @@ for(i in 1:42){
 dev.off()
 
 
-jpeg(file="Gene sampling length density scaled.jpeg", width=15, height=18,
+jpeg(file="Gene sampling length density scaled 151011.jpeg", width=15, height=18,
      units="in", res=300)
 par(mfcol=c(7,6))
 for(i in 1:42){

@@ -76,7 +76,8 @@ C_venn_SNPs <- draw.quintuple.venn(area1=length(C1_sig_positions), area2=length(
                                         intersect(C4_sig_positions, C5_sig_positions))),
                  n12345=length(intersect(intersect(C1_sig_positions, C2_sig_positions), 
                                          intersect(intersect(C3_sig_positions, C4_sig_positions), C5_sig_positions))),
-                 category=c("C1", "C2", "C3", "C4", "C5"))
+                 category=c("C1", "C2", "C3", "C4", "C5"),
+                 cex=rep(1, 31), cat.cex=rep(2, 5), margin=0.15)
 
  
 D_venn_SNPs <- draw.quintuple.venn(area1=length(D1_sig_positions), area2=length(D2_sig_positions), area3=length(D3_sig_positions),
@@ -113,7 +114,8 @@ D_venn_SNPs <- draw.quintuple.venn(area1=length(D1_sig_positions), area2=length(
                                                           intersect(D4_sig_positions, D5_sig_positions))),
                                    n12345=length(intersect(intersect(D1_sig_positions, D2_sig_positions), 
                                                            intersect(intersect(D3_sig_positions, D4_sig_positions), D5_sig_positions))),
-                                   category=c("D1", "D2", "D3", "D4", "D5"))
+                                   category=c("D1", "D2", "D3", "D4", "D5"),
+                                   cex=rep(1, 31), cat.cex=rep(2, 5), margin=0.15)
 
 #############################
 # Gene Venn Diagram objects #
@@ -154,7 +156,8 @@ C_venn_genes <- draw.quintuple.venn(area1=length(C1_sig_gene_names), area2=lengt
                                            intersect(C4_sig_gene_names, C5_sig_gene_names))),
                     n12345=length(intersect(intersect(C1_sig_gene_names, C2_sig_gene_names), 
                                             intersect(intersect(C3_sig_gene_names, C4_sig_gene_names), C5_sig_gene_names))),
-                    category=c("C1", "C2", "C3", "C4", "C5"))
+                    category=c("C1", "C2", "C3", "C4", "C5"),
+                    cex=rep(1, 31), cat.cex=rep(2, 5), margin=0.15)
 
 
 
@@ -195,7 +198,8 @@ D_venn_genes <- draw.quintuple.venn(area1=length(D1_sig_gene_names), area2=lengt
                                                            intersect(D4_sig_gene_names, D5_sig_gene_names))),
                                     n12345=length(intersect(intersect(D1_sig_gene_names, D2_sig_gene_names), 
                                                             intersect(intersect(D3_sig_gene_names, D4_sig_gene_names), D5_sig_gene_names))),
-                                    category=c("D1", "D2", "D3", "D4", "D5"))
+                                    category=c("D1", "D2", "D3", "D4", "D5"),
+                                    cex=rep(1, 31), cat.cex=rep(2, 5), margin=0.15)
 
 
 
@@ -207,7 +211,7 @@ D_venn_genes <- draw.quintuple.venn(area1=length(D1_sig_gene_names), area2=lengt
 
 setwd('/Users/pgriffin/Documents/Drosophila\ Selection\ Experiment/gene_list_overlap_testing')
 
-pdf(file="Venn_SNP_and_gene_overlap.pdf", width=12, height=12)
+pdf(file="Venn_SNP_and_gene_overlap.pdf", width=7, height=7)
 grid.layout(nrow=2, ncol=2)
 grid.draw(C_venn_SNPs)
 grid.text(label="SNPs", x=0.9, y=0.9)

@@ -71,12 +71,12 @@ find_and_rearrange_majmin_calls <- function(frequency_table){
 # k = number of alleles (2)
 # p0 = initial allele frequency
 # p1 = final allele frequency
-# t = number of generations apart (13)
+# t = number of generations apart (13) ACTUALLY 21!!
 # n0 = number of diploid individuals genotyped in initial generation (200)
 # n1 = number of diploid individuals genotyped in final generation (50)
 
 k <- 2
-t <- 13
+t <- 21
 n0 <- 200
 n1 <- 50
 
@@ -99,7 +99,7 @@ Fhat2 <- function(input_row, p0_location, p1_location){
   return(ple)
 }
 
-rep_testing <- subset(all_D_se, all_D_se[,1]==all_D_se[,2])
+#rep_testing <- subset(all_D_se, all_D_se[,1]==all_D_se[,2])
 
 Ne_cross_gen_calc <- function(freq_data_frame, p0_location, p1_location){
   number_loci <- nrow(freq_data_frame)
@@ -125,16 +125,19 @@ Ne_cross_gen_calc <- function(freq_data_frame, p0_location, p1_location){
 
 # import all C replicate SNP frequency tables and merge
 
+setwd("~/Documents/Drosophila Selection Experiment/allele_frequency_difference_testing")
 
+rm(all_C_data_frame)
 for(i in Sample_code[1:5]){
   input_file_name <- paste(i, "_freq_table.txt", sep="")
+  print(paste("Input file: ", input_file_name))
   object_name <- paste(i, "_freq_table", sep="")
   assign(object_name, read.table(input_file_name, sep="\t", stringsAsFactors=FALSE, header=FALSE))
   if(i == "C1"){
     all_C_data_frame <- get(object_name)
   }
   else{
-    all_C_data_frame <- rbind(allC_data_frame, get(object_name))
+    all_C_data_frame <- rbind(all_C_data_frame, get(object_name))
   }
 }
 colnames(all_C_data_frame) <- query_head
@@ -254,15 +257,40 @@ Ne_results[30,] <- list("neutral", "D5", "D", Ne_cross_gen_calc(random_se, p0_lo
 
 ne_plot <- ggplot(data=Ne_results, aes(x=SNP_set, y=Ne)) + 
   geom_point(aes(colour=factor(C_or_D), size=2)) + 
-  scale_colour_manual(values=c(rgb(255, 0, 0, 100, maxColorValue=255), rgb(0, 0, 255, 100, maxColorValue=255))) +
-  scale_y_log10(breaks=c(10, 100, 1000, 10000)) + 
-  theme(legend.position="none")
+  scale_colour_manual(values=c(rgb(0, 0, 255, 100, maxColorValue=255), rgb(255, 0, 0, 100, maxColorValue=255))) +
+  scale_y_log10(breaks=seq(from=10, to=180, length=18), 
+                labels=c(10, 20, 30, 40, 50, "", 70, "", "", 100, "", 120, "", "", 150, "", "", 180)) + 
+  xlab("SNP set") + 
+  theme_bw() + 
+  theme(legend.position="none", panel.grid.minor=element_blank(),
+        panel.grid.major=element_blank())
 
-pdf("Ne_plot_for_neutral_lab_and_desiccation_candidate_SNP_sets.pdf", height=7, width=5)
+pdf("Ne_plot_for_neutral_lab_and_desiccation_candidate_SNP_sets_151210.pdf", height=4, width=4)
 ne_plot
 dev.off()
 
 write.table(Ne_results, file="Ne_calculations.txt", sep="\t", quote=FALSE, row.names=FALSE)
+
+# Testing difference in Ne between C and D lines
+
+neutral_testing <- Ne_results[Ne_results[,1]=="neutral",]
+t.test(neutral_testing$Ne~neutral_testing$C_or_D)
+
+lab_testing <- Ne_results[Ne_results[,1]=="lab",]
+t.test(lab_testing$Ne~lab_testing$C_or_D)
+
+des_testing <- Ne_results[Ne_results[,1]=="des",]
+t.test(des_testing$Ne~des_testing$C_or_D)
+
+test_C_des_neutral <- Ne_results[Ne_results[,1]!="lab"&Ne_results[,3]=="C",]
+t.test(test_C_des_neutral$Ne~test_C_des_neutral$SNP_set)
+
+reduction_from_neutral <- c(neutral_testing[6:10,4]-lab_testing[6:10,4],
+                                neutral_testing[1:5,4]-des_testing[1:5,4])
+reduction_explanatory <- c(rep("D_reduction_in_lab_loci", times=5),
+                           rep("C_reduction_in_des_loci", times=5))
+
+t.test(reduction_from_neutral~reduction_explanatory)
 
 ########################
 # Now looking at the   #
@@ -277,6 +305,21 @@ write.table(Ne_results, file="Ne_calculations.txt", sep="\t", quote=FALSE, row.n
 # standardized_variance=variance/(q*(1-q))
 # also try correcting for starting allele frequency
 # standardized_variance_2=variance(a0(1-q0))
+# also try removing reps where allele is fixed
+
+var_no_fixed <- function(input_vector){
+  #no_fixed <- input_vector[input_vector<1&input_vector>0]
+  no_fixed <- input_vector[input_vector<0.96&input_vector>0.04]
+  output_var <- var(no_fixed)
+  return(output_var)
+}
+
+mean_no_fixed <- function(input_vector){
+  #no_fixed <- input_vector[input_vector<1&input_vector>0]
+  no_fixed <- input_vector[input_vector<0.96&input_vector>0.04]
+  output_mean <- mean(no_fixed)
+  return(output_mean)
+}
 
 
 calculate_overall_allele_freq_variance <- function(input_table, MB_col, 
@@ -294,6 +337,19 @@ calculate_overall_allele_freq_variance <- function(input_table, MB_col,
   
 }
 
+allele_freq_variance_distribution <- function(input_table, MB_col, 
+                                                   focal_cols, SNP_set, rep_category){
+  cols_to_use <- input_table[,focal_cols]
+  raw_variance <- apply(cols_to_use, 1, var)
+  raw_mean <- apply(cols_to_use, 1, mean)
+  standardized_variance <- raw_variance/(raw_mean*(1-raw_mean))
+
+  variance_distribution <- data.frame(col1=standardized_variance, 
+                                 col2=SNP_set, col3=rep_category)
+  colnames(variance_distribution) <- c("standardized_variance", "SNP_set", "rep_category")
+  return(variance_distribution)
+}
+
 calculate_binned_allele_freq_variance <- function(input_table, MB_col, focal_cols,
                                                   SNP_set, rep_category){
   
@@ -303,6 +359,12 @@ calculate_binned_allele_freq_variance <- function(input_table, MB_col, focal_col
   standardized_variance <- raw_variance/(raw_mean*(1-raw_mean))
   start_standardized_variance <- raw_variance/(input_table[,MB_col]*(1-input_table[,MB_col]))
   is.na(start_standardized_variance) <- sapply(start_standardized_variance, is.infinite)
+  no_fixed_variance <- apply(cols_to_use, 1, var_no_fixed)
+  no_fixed_mean <- apply(cols_to_use, 1, mean_no_fixed)
+  no_fixed_standardized_variance <- no_fixed_variance/(no_fixed_mean*(1-no_fixed_mean))
+  no_fixed_start_standardized_variance <- no_fixed_variance/(input_table[,MB_col]*(1-input_table[,MB_col]))
+  is.na(no_fixed_start_standardized_variance) <- sapply(start_standardized_variance, is.infinite)
+  
   
   start_set_to_0.5 <- input_table[,MB_col]
   start_set_to_0.5[which(start_set_to_0.5 > 0.5)] <- 1-input_table[which(start_set_to_0.5 > 0.5),1]
@@ -314,22 +376,39 @@ calculate_binned_allele_freq_variance <- function(input_table, MB_col, focal_col
   mean_standardized_var_binned <- tapply(standardized_variance, INDEX=bins_to_use, FUN=mean, na.rm=TRUE)
   sd_standardized_var_binned <- tapply(standardized_variance, INDEX=bins_to_use, FUN=sd, na.rm=TRUE)
   #count_binned <-tapply(is.na(Dset_Dreps_standardized_variance)==FALSE, INDEX=Dset_bins, length)
+  mean_no_fixed_var_binned <- tapply(no_fixed_variance, INDEX=bins_to_use, FUN=mean, na.rm=TRUE)
+  sd_no_fixed_var_binned <- tapply(no_fixed_variance, INDEX=bins_to_use, FUN=sd, na.rm=TRUE)
+  mean_no_fixed_standardized_var_binned <- tapply(no_fixed_standardized_variance, INDEX=bins_to_use, FUN=mean, na.rm=TRUE)
+  sd_no_fixed_standardized_var_binned <- tapply(no_fixed_standardized_variance, INDEX=bins_to_use, FUN=sd, na.rm=TRUE)
+  mean_no_fixed_start_standardized_var_binned <- tapply(no_fixed_start_standardized_variance, INDEX=bins_to_use, FUN=mean, na.rm=TRUE)
+  sd_no_fixed_start_standardized_var_binned <- tapply(no_fixed_start_standardized_variance, INDEX=bins_to_use, FUN=sd, na.rm=TRUE)
   
   
   mean_start_standardized_var_binned <- tapply(start_standardized_variance, INDEX=bins_to_use, FUN=mean, na.rm=TRUE)
   sd_start_standardized_var_binned <- tapply(start_standardized_variance, INDEX=bins_to_use, FUN=sd, na.rm=TRUE)
+  
+  #mean_no_fixed_raw_var_binned <- tapply(raw_variance, INDEX=bins_to_use, FUN=var_no_fixed)
   
   binned_variance_results <- data.frame(bins[2:11], rep(SNP_set, times=10), 
                                         rep(rep_category, times=10), 
                                         mean_raw_var_binned, sd_raw_var_binned, 
                                         mean_standardized_var_binned, sd_standardized_var_binned,
                                         mean_start_standardized_var_binned,
-                                        sd_start_standardized_var_binned)
+                                        sd_start_standardized_var_binned,
+                                        mean_no_fixed_var_binned,
+                                        sd_no_fixed_var_binned,
+                                        mean_no_fixed_standardized_var_binned,
+                                        sd_no_fixed_standardized_var_binned,
+                                        mean_no_fixed_start_standardized_var_binned,
+                                        sd_no_fixed_start_standardized_var_binned)
   colnames(binned_variance_results) <- c("bins", "SNP_set", 
                                          "rep_category", "mean_raw_var", 
                                          "sd_raw_var", "mean_standardized_var", 
                                          "sd_standardized_var",
-                                         "mean_start_standardized_var", "sd_start_standardized_var")
+                                         "mean_start_standardized_var", "sd_start_standardized_var",
+                                         "mean_nofixed_var", "sd_nofixed_var",
+                                         "mean_nofixed_standardized_var", "sd_nofixed_standardized_var",
+                                         "mean_nofixed_start_standardized_var", "sd_nofixed_start_standardized_var")
   return(binned_variance_results)
 }
 
@@ -337,6 +416,12 @@ Dset_Dreps_overall <- calculate_overall_allele_freq_variance(all_D_se, 1, 7:11, 
 Dset_Creps_overall <- calculate_overall_allele_freq_variance(all_D_se, 1, 2:6, "des", "C")
 Cset_Dreps_overall <- calculate_overall_allele_freq_variance(all_C_se, 1, 7:11, "lab", "D")
 Cset_Creps_overall <- calculate_overall_allele_freq_variance(all_C_se, 1, 2:6, "lab", "C")
+
+Dset_Dreps_values <- allele_freq_variance_distribution(all_D_se, 1, 7:11, "des", "D")
+Dset_Creps_values <- allele_freq_variance_distribution(all_D_se, 1, 2:6, "des", "C")
+Cset_Dreps_values <- allele_freq_variance_distribution(all_C_se, 1, 7:11, "lab", "D")
+Cset_Creps_values <- allele_freq_variance_distribution(all_C_se, 1, 2:6, "lab", "C")
+
 
 Dset_Dreps_binned <- calculate_binned_allele_freq_variance(all_D_se, 1, 7:11, "des", "D")
 Dset_Creps_binned <- calculate_binned_allele_freq_variance(all_D_se, 1, 2:6, "des", "C")
@@ -351,6 +436,9 @@ rset_to_use <- random_se[which((rset_pre_q>0.04&rset_pre_q<0.96)|(random_se[,1]>
 rset_Dreps_overall <- calculate_overall_allele_freq_variance(rset_to_use, 1, 7:11, "neutral", "D")
 rset_Creps_overall <- calculate_overall_allele_freq_variance(rset_to_use, 1, 2:6, "neutral", "C")
 
+rset_Dreps_values <- allele_freq_variance_distribution(rset_to_use, 1, 7:11, "neutral", "D")
+rset_Creps_values <- allele_freq_variance_distribution(rset_to_use, 1, 2:6, "neutral", "C")
+
 rset_Dreps_binned <- calculate_binned_allele_freq_variance(rset_to_use, 1, 7:11, "neutral", "D")
 rset_Creps_binned <- calculate_binned_allele_freq_variance(rset_to_use, 1, 2:6, "neutral", "C")
 
@@ -363,6 +451,19 @@ binned_variance_results <- rbind(Dset_Dreps_binned, Dset_Creps_binned,
                                  Cset_Dreps_binned, Cset_Creps_binned,
                                  rset_Dreps_binned, rset_Creps_binned)
 
+variance_values <- rbind(Dset_Dreps_values, Dset_Creps_values,
+                         Cset_Dreps_values, Cset_Creps_values,
+                         rset_Dreps_values, rset_Creps_values)
+
+des_only <- variance_values[variance_values$SNP_set=="des",]
+t.test(des_only$standardized_variance~des_only$rep_category)
+
+lab_only <- variance_values[variance_values$SNP_set=="lab",]
+t.test(lab_only$standardized_variance~lab_only$rep_category)
+
+
+tapply(variance_values$standardized_variance, INDEX=list(as.factor(variance_values$rep_category), as.factor(variance_values$SNP_set)), FUN=length)
+
 variance_plot <- ggplot(data=variance_results, aes(x=SNP_set, y=mean_standardized_variance)) + 
   geom_point(aes(colour=factor(rep_category), size=2)) + 
   scale_colour_manual(values=c(rgb(255, 0, 0, 100, maxColorValue=255), rgb(0, 0, 255, 100, maxColorValue=255))) +
@@ -374,6 +475,24 @@ variance_plot_2 <- qplot(SNP_set, mean_standardized_variance, fill=factor(rep_ca
   scale_fill_manual(values=c(rgb(255, 0, 0, 100, maxColorValue=255), rgb(0, 0, 255, 100, maxColorValue=255))) +
   theme_bw()
 
+dodge <- position_dodge(width=0.9) 
+variance_plot_3 <- ggplot(data=variance_values, aes(x=factor(SNP_set), y=standardized_variance)) +
+  geom_point(aes(fill=factor(rep_category)), 
+             position=position_jitterdodge(jitter.width=0.5, dodge.width=0.75), 
+             colour=rgb(100, 100, 100, 100, maxColorValue=255),
+             size=0.4) +
+  geom_boxplot(aes(fill=factor(rep_category)), outlier.colour=rgb(0, 0, 0, 0, maxColorValue=255)) +
+  scale_fill_manual(values=c(rgb(255, 0, 0, 100, maxColorValue=255), rgb(0, 0, 255, 100, maxColorValue=255))) +
+  ylab("F") +
+  xlab("SNP category") +
+  theme_bw() +
+  theme(legend.position="none", panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        axis.line = element_line(colour = "black", size = 0.4),
+        axis.line.y = element_line(colour = "black", size = 0.4),
+        axis.text.y = element_text(angle = 90, hjust=0.5, vjust=0.5))
+
 
 pdf(file="Variance in allele freq among replicate lines.pdf", height=5, width=5)
 variance_plot
@@ -383,6 +502,14 @@ pdf(file="Variance in allele freq among replicate lines barplot.pdf", height=5, 
 variance_plot_2
 dev.off()
 
+pdf(file="Variance in allele freq among replicate lines boxplot.pdf", height=4, width=7)
+variance_plot_3
+dev.off()
+
+jpeg(file="Variance in allele freq among replicate lines boxplot.jpg", height=5.5, width=11, units="cm", res=300)
+variance_plot_3
+dev.off()
+
 binned_variance_results$bins<-as.numeric(binned_variance_results$bins)
 
 binned_variance_plot <- ggplot(data=binned_variance_results, aes(x=bins, y=mean_standardized_var)) + 
@@ -390,6 +517,7 @@ binned_variance_plot <- ggplot(data=binned_variance_results, aes(x=bins, y=mean_
   scale_colour_manual(values=c(rgb(255, 0, 0, 100, maxColorValue=255), rgb(0, 0, 255, 100, maxColorValue=255))) +
 #  geom_linerange(aes(ymax=mean_variance+sd_variance, ymin=mean_variance-sd_variance), position=dodge)+
   facet_grid(~SNP_set) +
+  ylab("Mean standardized variance") +
   theme(legend.position="none")
 
 binned_raw_variance_plot <- ggplot(data=binned_variance_results, aes(x=bins, y=mean_raw_var)) + 
@@ -397,6 +525,7 @@ binned_raw_variance_plot <- ggplot(data=binned_variance_results, aes(x=bins, y=m
   scale_colour_manual(values=c(rgb(255, 0, 0, 100, maxColorValue=255), rgb(0, 0, 255, 100, maxColorValue=255))) +
   #  geom_linerange(aes(ymax=mean_variance+sd_variance, ymin=mean_variance-sd_variance), position=dodge)+
   facet_grid(~SNP_set) +
+  ylab("Mean raw variance") +
   theme(legend.position="none")
 
 binned_start_variance_plot <- ggplot(data=binned_variance_results, aes(x=bins, y=mean_start_standardized_var)) + 
@@ -404,6 +533,38 @@ binned_start_variance_plot <- ggplot(data=binned_variance_results, aes(x=bins, y
   scale_colour_manual(values=c(rgb(255, 0, 0, 100, maxColorValue=255), rgb(0, 0, 255, 100, maxColorValue=255))) +
   #  geom_linerange(aes(ymax=mean_variance+sd_variance, ymin=mean_variance-sd_variance), position=dodge)+
   facet_grid(~SNP_set) +
+  ylab("Mean variance stand. by start freq") +
   theme(legend.position="none")
 
+binned_nofixed_variance_plot <- ggplot(data=binned_variance_results, aes(x=bins, y=mean_nofixed_var)) + 
+  geom_point(aes(colour=factor(rep_category), size=2)) + 
+  scale_colour_manual(values=c(rgb(255, 0, 0, 100, maxColorValue=255), rgb(0, 0, 255, 100, maxColorValue=255))) +
+  #  geom_linerange(aes(ymax=mean_variance+sd_variance, ymin=mean_variance-sd_variance), position=dodge)+
+  facet_grid(~SNP_set) +
+  ylab("Mean raw variance, fixed removed") +
+  theme(legend.position="none")
+
+binned_nofixed_standardized_variance_plot <- ggplot(data=binned_variance_results, aes(x=bins, y=mean_nofixed_standardized_var)) + 
+  geom_point(aes(colour=factor(rep_category), size=2)) + 
+  scale_colour_manual(values=c(rgb(255, 0, 0, 100, maxColorValue=255), rgb(0, 0, 255, 100, maxColorValue=255))) +
+  #  geom_linerange(aes(ymax=mean_variance+sd_variance, ymin=mean_variance-sd_variance), position=dodge)+
+  facet_grid(~SNP_set) +
+  ylab("Mean standardized variance, fixed removed") +
+  theme(legend.position="none")
+
+# binned_nofixed_start_variance_plot <- ggplot(data=binned_variance_results, aes(x=bins, y=mean_nofixed_start_standardized_var)) + 
+#   geom_point(aes(colour=factor(rep_category), size=2)) + 
+#   scale_colour_manual(values=c(rgb(255, 0, 0, 100, maxColorValue=255), rgb(0, 0, 255, 100, maxColorValue=255))) +
+#   #  geom_linerange(aes(ymax=mean_variance+sd_variance, ymin=mean_variance-sd_variance), position=dodge)+
+#   facet_grid(~SNP_set) +
+#   theme(legend.position="none")
+
+pdf(file="Binned variance in allele freq among replicate lines.pdf", height=5, width=7)
+binned_variance_plot
+binned_nofixed_standardized_variance_plot
+binned_raw_variance_plot
+binned_nofixed_variance_plot
+binned_start_variance_plot
+
+dev.off()
 

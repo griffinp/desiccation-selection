@@ -33,6 +33,12 @@ sed -i '' "1s/.*/$var/" C1_test.txt
 awk '
     FNR==1 && NR!=1 { while (/^#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO/) getline; }
     1 {print}
-' D5_*_fet_drift_sig_SNPs_150821.vcf > D5_fet_drift_sig_SNPs_150821.vcf
+' D3_*_fet_drift_sig_SNPs_150821.vcf > D3_fet_drift_sig_SNPs_150821.vcf
 
 
+############
+
+awk '
+    FNR==1 && NR!=1 { while (/^#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO/) getline; }
+    1 {print}
+' CandS_*_all_SNPs_150908.vcf > CandS_all_SNPs_150908.vcf

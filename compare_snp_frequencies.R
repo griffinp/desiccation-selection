@@ -1,5 +1,5 @@
 
-library(RSQLite)
+#library(RSQLite)
 library(likert)
 
 setwd("~/Documents/Drosophila Selection Experiment/snp_and_gene_lists")
@@ -14,7 +14,19 @@ position_as_search_string <- function(chr, pos){
   return(output)
 }
 
-net_stacked <- function(x, j) {
+useful_subset <- function(database_query_output){
+  individual_col_names <- paste(rep(Sample_code, each=4), 
+                                rep(c('_dec', '_inc', '_startfreq', '_endfreq'), times=10), 
+                                sep="")
+  useful_col_names <- c('chr', 'pos', individual_col_names)
+  useful_output <- database_query_output[,colnames(database_query_output)%in%useful_col_names]
+}
+
+query_header <- 'chr pos ref MB_counts C1_counts C1_dec C1_inc C1_startfreq C1_endfreq chr:1 pos:1 ref:1 MB_counts:1 C2_counts C2_dec C2_inc C2_startfreq C2_endfreq chr:2 pos:2 ref:2 MB_counts:2 C3_counts C3_dec C3_inc C3_startfreq C3_endfreq chr:3 pos:3 ref:3 MB_counts:3 C4_counts C4_dec C4_inc C4_startfreq C4_endfreq chr:4 pos:4 ref:4 MB_counts:4 C5_counts C5_dec C5_inc C5_startfreq C5_endfreq chr:5 pos:5 ref:5 MB_counts:5 D1_counts D1_dec D1_inc D1_startfreq D1_endfreq chr:6 pos:6 ref:6 MB_counts:6 D2_counts D2_dec D2_inc D2_startfreq D2_endfreq chr:7 pos:7 ref:7 MB_counts:7 D3_counts D3_dec D3_inc D3_startfreq D3_endfreq chr:8 pos:8 ref:8 MB_counts:8 D4_counts D4_dec D4_inc D4_startfreq D4_endfreq chr:9 pos:9 ref:9 MB_counts:9 D5_counts D5_dec D5_inc D5_startfreq D5_endfreq'
+query_head <- unlist(strsplit(query_header, split=' ', fixed=TRUE))
+
+
+net_stacked <- function(x, j, letter_label_to_add, n_to_add) {
   #Function from here http://statisfactions.com/2012/improved-net-stacked-distribution-graphs-via-ggplot2-trickery/
   ## x: a data.frame or list, where each column is a ordered factor with the same levels
   ## lower levels are presumed to be "negative" responses; middle value presumed to be neutral
@@ -64,21 +76,28 @@ net_stacked <- function(x, j) {
   neg$Frequency_Change <- ordered(neg$Frequency_Change, levels = rev(levels(neg$Frequency_Change)))
   
   stackedchart <- ggplot() +
-    aes(Sample, Freq, fill = Frequency_Change, order = Frequency_Change) + 
-    geom_bar(data = neg, stat = "identity") +
-    geom_bar(data = pos, stat = "identity") + geom_hline(yintercept=0) +
+    
+    geom_bar(data = neg, aes(Sample, Freq, fill = Frequency_Change, order = Frequency_Change), stat = "identity") +
+    geom_bar(data = pos, aes(Sample, Freq, fill = Frequency_Change, order = Frequency_Change), stat = "identity") + 
+    geom_hline(yintercept=0) +
     scale_y_continuous(name = "",
                        labels = paste0(seq(-100, 100, 20), "%"),
                        limits = c(-1, 1),
                        breaks = seq(-1, 1, .2)) +
-    scale_fill_manual(values=c(colors()[373], colors()[134],
-                      colors()[616], colors()[131])) + 
-    ggtitle(paste("sig. SNPs in", j)) + 
-    theme(legend.position="none") +
+    scale_fill_manual(values=c(colors()[190], colors()[153],
+                      colors()[230], colors()[253])) + 
+    #ggtitle(paste("sig. SNPs in", j, ", n = ", n_to_add)) + 
+    annotate("text", y=-0.95, x=10, label=letter_label_to_add, hjust=0, size=8) +
+    annotate("text", y=-1, x=1, label=paste("n =", n_to_add), hjust=0) +
+    theme(legend.position="none", panel.grid.major=element_blank(),
+          panel.grid.minor=element_blank(), 
+          plot.background = element_rect(fill = "transparent",colour = NA)) +
+    annotate("rect", xmin=0, xmax=5.5, ymin=-Inf, ymax=Inf, fill="red", alpha=0.1) +
+    annotate("rect", xmin=5.5, xmax=11, ymin=-Inf, ymax=Inf, fill = "blue", alpha=0.1) +   
+    
     #scale_fill_discrete(limits = c(negatives, positives)) +
     coord_flip()
 
-  
   stackedchart
 }
 
@@ -318,8 +337,6 @@ for(i in Sample_code[6:10]){
 ### code to interpret output of database queries ###
 
 
-query_header <- 'chr\tpos	ref	MB_counts	C1_counts	C1_dec	C1_inc	C1_startfreq	C1_endfreq	chr:1	pos:1	ref:1	MB_counts:1	C2_counts	C2_dec	C2_inc	C2_startfreq	C2_endfreq	chr:2	pos:2	ref:2	MB_counts:2	C3_counts	C3_dec	C3_inc	C3_startfreq	C3_endfreq	chr:3	pos:3	ref:3	MB_counts:3	C4_counts	C4_dec	C4_inc	C4_startfreq	C4_endfreq	chr:4	pos:4	ref:4	MB_counts:4	C5_counts	C5_dec	C5_inc	C5_startfreq	C5_endfreq	chr:5	pos:5	ref:5	MB_counts:5	D1_counts	D1_dec	D1_inc	D1_startfreq	D1_endfreq	chr:6	pos:6	ref:6	MB_counts:6	D2_counts	D2_dec	D2_inc	D2_startfreq	D2_endfreq	chr:7	pos:7	ref:7	MB_counts:7	D3_counts	D3_dec	D3_inc	D3_startfreq	D3_endfreq	chr:8	pos:8	ref:8	MB_counts:8	D4_counts	D4_dec	D4_inc	D4_startfreq	D4_endfreq	chr:9	pos:9	ref:9	MB_counts:9	D5_counts	D5_dec	D5_inc	D5_startfreq	D5_endfreq'
-query_head <- unlist(strsplit(query_header, split='\t', fixed=TRUE))
 
 
 D_high <- read.table('/Users/pgriffin/Documents/Drosophila\ Selection\ Experiment/snpeff_SNP_feature_enrichment/D_high_effects.txt',
@@ -329,13 +346,7 @@ d_high <- read.table('D_high_allele_freq.txt', header=FALSE, sep="\t",
                      stringsAsFactors=FALSE)
 colnames(d_high) <- query_head
 
-useful_subset <- function(database_query_output){
-  individual_col_names <- paste(rep(Sample_code, each=4), 
-                                rep(c('_dec', '_inc', '_startfreq', '_endfreq'), times=10), 
-                                sep="")
-  useful_col_names <- c('chr', 'pos', individual_col_names)
-  useful_output <- database_query_output[,colnames(database_query_output)%in%useful_col_names]
-}
+
 
 d_useful <- useful_subset(d_high)
 
@@ -483,6 +494,9 @@ dev.off()
 
 setwd('/Users/pgriffin/Documents/Drosophila\ Selection\ Experiment/allele_frequency_difference_testing')
 
+
+
+
 stats_table <- data.frame(focal_sample=character(), focal_sample_cat=character(),
                           comp_sample=character(), comp_sample_cat=character(),
                           prop_loci_above_zero=numeric(), stringsAsFactors=FALSE)
@@ -539,7 +553,7 @@ for(j in Sample_code){
                         levels=c("-1 < x < -0.1", "-0.1 < x < 0", "0 < x < 0.1", "0.1 < x < 1"))
   }
   row.names(prelik) <- row.names(temp_freqchange_table)
-  temp_likert <- net_stacked(prelik, j=j)
+  temp_likert <- net_stacked(prelik, j=j, n_to_add=nrow(prelik), letter_label_to_add=LETTERS[which(Sample_code==j)])
   assign(paste(j, "likert", sep="_"), temp_likert)
   
   #add info to table for statistical test
@@ -567,55 +581,8 @@ for(j in Sample_code){
     t_test_table[1,] <- new_row2
   } else {
     t_test_table <- rbind(t_test_table, new_row2)
-  }
-  
-#   prelik2 <- reshape(prelik, idvar="Sample",
-#                      varying=list("C1", "C2", "C3", "C4", "C5",
-#                                   "D1", "D2", "D3", "D4", "D5"),
-#                      timevar="locus_name",
-#                      v.names="Direction",
-#                      direction="long"
-#                      )
-  
-  
-#   temp_pdf_name <- paste(j, "_sig_loci_freq_change_in_other_samples.pdf", sep="")
-#   pdf(file=temp_pdf_name, width=20, height=9)
-#   par(mfrow=c(2,5))
-#   for(i in (1:10)[-which(Sample_code==j)]){
-#     print(paste("Plotting", Sample_code[i], "versus", j, "sig. loci"))
-#     temp_comparison_sample <- Sample_code[i]
-#     plot(temp_freqchange_table[,which(colnames(temp_freqchange_table)==j)], 
-#          temp_freqchange_table[,i], 
-#          cex=0.9, 
-#          #xlim=c(0.2, 0.8), 
-#          #ylim=c(-0.8, 0.8),
-#          ylab=paste("Frequency change in", temp_comparison_sample),
-#          xlab=paste("Frequency change in",  j, "sig. loci"),
-#          pch=19, col=rgb(100, 100, 100, 100, maxColorValue=255))
-#     lines(y=seq(0.3, 0.7, length=1000), x=seq(0.3, 0.7, length=1000), col="red")
-#     lines(y=rep(0.3, times=1000), x=seq(0, 1, length=1000), col="red", lty=2)
-#     lines(y=rep(0, times=1000), x=seq(0, 1, length=1000), col="grey", lty=2)
-#   }
-#   dev.off()
-#   temp_pdf_name <- paste(j, "_sig_loci_freq_change_in_other_samples_histograms.pdf", sep="")
-#   pdf(file=temp_pdf_name, width=20, height=7)
-#   par(mfrow=c(2,5))
-#     for(i in (1:10)[-which(Sample_code==j)]){
-#     hist(temp_freqchange_table[,j], freq=TRUE, breaks=100, 
-#          col=rgb(100, 100, 100, 100, maxColorValue=255), 
-#          border=rgb(100, 100, 100, 100, maxColorValue=255),
-#          main=paste("Frequency change in",  j, "sig. loci"),
-#          ylab="Locus count per bin", xlim=c(-1, 1),
-#          ylim=c(0, nrow(temp_freqchange_table)/5),
-#          xlab=paste("vs.", Sample_code[i]))
-#     hist(temp_freqchange_table[,i], freq=TRUE, breaks=100, 
-#          col=rgb(100, 0, 0, 100, maxColorValue=255), 
-#          border=rgb(100, 0, 0, 100, maxColorValue=255),
-#          add=TRUE)
-#     #bins <- c(-1, -0.25, 0, 0.25, 1)
-#     }
-#   dev.off()
-  
+  }  
+  assign(paste(j, "sig_loci_freq_list", sep="_"), all_locus_output)
 }
 
 write.table(stats_table, file="Proportion_loci_changing_in_same_dirn_as_focal_sample.txt",
@@ -626,10 +593,20 @@ write.table(t_test_table, file="T_test_results_for_individual_focal_sample_SNP_s
 
 #### Likert plot for all 10 samples
 
-pdf("Likert plots for all sig. SNP sets.pdf", width=11, height=28)
+pdf("Likert plots for all sig. SNP sets.pdf", width=11, height=24)
 multiplot(C1_likert, C2_likert, C3_likert, C4_likert, C5_likert,
           D1_likert, D2_likert, D3_likert, D4_likert, D5_likert,
           cols=2)
+dev.off()
+
+pdf("Likert plots for all sig. SNP sets horizontal.pdf", width=24, height=11)
+multiplot(C1_likert, D1_likert, C2_likert, D2_likert, C3_likert,
+          D3_likert, C4_likert, D4_likert, C5_likert, D5_likert,
+          cols=5)
+dev.off()
+
+pdf("Likert plot for just D1.pdf", width=5.5, height=5.5)
+D1_likert
 dev.off()
 
 
@@ -638,6 +615,19 @@ dev.off()
 aov1 <- aov(prop_loci_above_zero~focal_sample_cat*comp_sample_cat, data=stats_table)
 
 glm1 <- glm(prop_loci_above_zero~focal_sample_cat*comp_sample_cat, data=stats_table)
+
+#################
+#
+# Now identify the loci with the largest freq change
+#
+#################
+
+D1_freq_change_vector <- unlist(lapply(lapply(D1_sig_loci_freq_list, "[[", 3), "[", 6))
+
+length(which(D1_freq_change_vector>0.8))
+D1_high_freq_change <- unlist(lapply(lapply(D1_sig_loci_freq_list, "[[", 1), "[", c(1,2))[which(D1_freq_change_vector>0.8)])
+D1_high_freq_change <- matrix(D1_high_freq_change, ncol=2, byrow=TRUE)
+D1_high_freq_change <- apply(D1_high_freq_change, 1, paste, collapse=":")
 
 ##################
 #
