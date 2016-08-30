@@ -51,6 +51,8 @@ D5_sig_positions <- paste(D5_sig_ex[,1], D5_sig_ex[,2])
 C_sig_positions <-union(union(union(C1_sig_positions, C2_sig_positions), C3_sig_positions), 
                         union(C4_sig_positions, C5_sig_positions))
 
+# Extracting unique lists of candidate genes from candidate SNPs
+
 extract_gene_names_from_table <- function(snpsift_table){
   temp_gene_vector <- c()
   for(i in 3:90){
@@ -62,6 +64,8 @@ extract_gene_names_from_table <- function(snpsift_table){
   return(unique_gene_names[is.na(unique_gene_names)==FALSE])
 }
 
+
+
 C1_sig_gene_names <- extract_gene_names_from_table(C1_sig_ex)
 C2_sig_gene_names <- extract_gene_names_from_table(C2_sig_ex)
 C3_sig_gene_names <- extract_gene_names_from_table(C3_sig_ex)
@@ -72,6 +76,86 @@ D2_sig_gene_names <- extract_gene_names_from_table(D2_sig_ex)
 D3_sig_gene_names <- extract_gene_names_from_table(D3_sig_ex)
 D4_sig_gene_names <- extract_gene_names_from_table(D4_sig_ex)
 D5_sig_gene_names <- extract_gene_names_from_table(D5_sig_ex)
+
+
+
+
+
+# Count number of genes to identify multiple-mapping SNPs
+
+number_of_gene_maps <- function(snpsift_table_row){
+  temp_genes <- snpsift_table_row[3:90]
+  gene_names <- temp_genes[temp_genes!=""]
+  number_of_genes <- length(unique(gene_names))
+  return(number_of_genes)
+}
+
+C1_sig_gene_counts <- apply(C1_sig_ex, MARGIN=1, FUN=number_of_gene_maps)
+C2_sig_gene_counts <- apply(C2_sig_ex, MARGIN=1, FUN=number_of_gene_maps)
+C3_sig_gene_counts <- apply(C3_sig_ex, MARGIN=1, FUN=number_of_gene_maps)
+C4_sig_gene_counts <- apply(C4_sig_ex, MARGIN=1, FUN=number_of_gene_maps)
+C5_sig_gene_counts <- apply(C5_sig_ex, MARGIN=1, FUN=number_of_gene_maps)
+D1_sig_gene_counts <- apply(D1_sig_ex, MARGIN=1, FUN=number_of_gene_maps)
+D2_sig_gene_counts <- apply(D2_sig_ex, MARGIN=1, FUN=number_of_gene_maps)
+D3_sig_gene_counts <- apply(D3_sig_ex, MARGIN=1, FUN=number_of_gene_maps)
+D4_sig_gene_counts <- apply(D4_sig_ex, MARGIN=1, FUN=number_of_gene_maps)
+D5_sig_gene_counts <- apply(D5_sig_ex, MARGIN=1, FUN=number_of_gene_maps)
+
+for(i in Sample_code){
+  temp_sig_ex <- get(paste(i, "_sig_ex", sep=""))
+  temp_sig_ex_cols <- temp_sig_ex[,1:2]
+  temp_sig_ex_chrpos <- paste(temp_sig_ex_cols$chr, temp_sig_ex_cols$pos)
+  temp_sig_gene_counts <- get(paste(i, "_sig_gene_counts", sep=""))
+  temp_counts_file_name <- paste(i, "_sig_gene_mapping_counts.txt", sep="")
+  temp_single_mapping_file_name <- paste(i, "_single_mapping_SNPs.txt", sep="")
+  temp_multi_mapping_file_name <- paste(i, "_multi_mapping_SNPs.txt", sep="")
+  temp_single_mapping_gene_list <- paste(i, "_single_mapped_genes", sep="")
+  temp_multi_mapping_gene_list <- paste(i, "_multi_mapped_genes", sep="")
+  temp_single_mapped_genes_file_name <- paste(i, "_single_mapped_genes.txt", sep="")
+  temp_multi_mapped_genes_file_name <- paste(i, "_multi_mapped_genes.txt", sep="")
+  ###
+  temp_loc_and_counts <- data.frame(temp_sig_ex_cols, temp_sig_gene_counts)
+  write.table(temp_loc_and_counts,
+              file=temp_output_file_name,
+              sep="\t", quote=FALSE, row.names=FALSE)
+  ###
+  just_1_map <- subset(temp_loc_and_counts, temp_loc_and_counts[,3]>0&temp_loc_and_counts[,3]<2)
+  assign(paste(i, "_single_mapping_SNPs", sep=""), just_1_map)
+  write.table(just_1_map[,1:2],
+              file=temp_single_mapping_file_name,
+              sep="\t", quote=FALSE, row.names=FALSE)
+  just_1_map_chrpos <- paste(just_1_map$chr, just_1_map$pos)
+  just_1_map_unique_genes <- unique(temp_sig_ex[which(temp_sig_ex_chrpos%in%just_1_map_chrpos),3])
+  assign(temp_single_mapping_gene_list, just_1_map_unique_genes)
+  write.table(just_1_map_unique_genes, file=temp_single_mapped_genes_file_name,
+              sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+  #print(i)
+  ###
+  multi_map <- subset(temp_loc_and_counts, temp_loc_and_counts[,3]>1)
+  assign(paste(i, "_multi_mapping_SNPs", sep=""), multi_map)
+  write.table(multi_map[,1:2],
+              file=temp_multi_mapping_file_name,
+              sep="\t", quote=FALSE, row.names=FALSE)
+  multi_map_chrpos <- paste(multi_map$chr, multi_map$pos)
+  multi_map_gene_rows <- temp_sig_ex[which(temp_sig_ex_chrpos%in%multi_map_chrpos),]
+  #print(i) 
+  multi_map_genes <- c()
+  for(j in 3:90){
+    multi_map_genes <- c(multi_map_genes, multi_map_gene_rows[,j])
+  }
+  multi_map_unique_genes_pre <- unique(multi_map_genes)
+  multi_map_unique_genes <- multi_map_unique_genes_pre[is.na(multi_map_unique_genes_pre)==FALSE]
+  assign(temp_multi_mapping_gene_list, multi_map_unique_genes)
+  write.table(multi_map_unique_genes, file=temp_multi_mapped_genes_file_name,
+              sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+}
+
+
+
+
+
+
+
 
 ### NB SnpEff has annotated (some?) cases where two genes overlap in space as 
 ### 'Exon_chr_start_end'. I think this is a problem with v6.01 rather than 

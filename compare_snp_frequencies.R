@@ -73,22 +73,36 @@ net_stacked <- function(x, j, letter_label_to_add, n_to_add) {
   
   ## Negate the frequencies of negative responses, reverse order
   neg$Freq <- -neg$Freq
-  neg$Frequency_Change <- ordered(neg$Frequency_Change, levels = rev(levels(neg$Frequency_Change)))
+  #print(neg$Frequency_Change)
+  neg$Frequency_Change <- ordered(neg$Frequency_Change, levels = sort(levels(neg$Frequency_Change), decreasing=TRUE))
+  print(summary(pos))
+  print(summary(neg))
+  
   
   stackedchart <- ggplot() +
     
     geom_bar(data = neg, aes(Sample, Freq, fill = Frequency_Change, order = Frequency_Change), stat = "identity") +
     geom_bar(data = pos, aes(Sample, Freq, fill = Frequency_Change, order = Frequency_Change), stat = "identity") + 
     geom_hline(yintercept=0) +
+    # include scale showing % freq change
     scale_y_continuous(name = "",
                        labels = paste0(seq(-100, 100, 20), "%"),
                        limits = c(-1, 1),
                        breaks = seq(-1, 1, .2)) +
+    #scale_x_discrete(limits=c(-1, 12)) +
+    # include scale showing just 'divergent' and 'convergent'
+   # scale_y_continuous(name = "",
+  #                     #labels = c("divergent", "convergent"),
+  #                     labels= rep("", times=11),
+  #                     limits = c(-1, 1),
+  #                     breaks = seq(-1, 1, .2)) +
     scale_fill_manual(values=c(colors()[190], colors()[153],
                       colors()[230], colors()[253])) + 
     #ggtitle(paste("sig. SNPs in", j, ", n = ", n_to_add)) + 
     annotate("text", y=-0.95, x=10, label=letter_label_to_add, hjust=0, size=8) +
     annotate("text", y=-1, x=1, label=paste("n =", n_to_add), hjust=0) +
+    annotate("text", y=-0.5, x=0, label="divergent") +
+    annotate("text", y=0.5, x=0, label="convergent") +
     theme(legend.position="none", panel.grid.major=element_blank(),
           panel.grid.minor=element_blank(), 
           plot.background = element_rect(fill = "transparent",colour = NA)) +
@@ -584,6 +598,37 @@ for(j in Sample_code){
   }  
   assign(paste(j, "sig_loci_freq_list", sep="_"), all_locus_output)
 }
+
+
+# extract freq change for each focal line
+
+freq_change_df <- data.frame(sample=character(), freq_change <- numeric())
+for(i in Sample_code){
+  temp_freq_list <- get(paste(i, "_sig_loci_freq_list", sep=""))
+  temp_focal_freq_change_vector_name <- paste(i, "_focal_freq_change_vector", sep="")
+  iloc <- which(Sample_code==i)
+  temp_freq_change_vector <- lapply(temp_freq_list, "[[", 3)
+  temp_focal_freq_change_vector <- sapply(temp_freq_change_vector, "[[", iloc)
+  assign(temp_focal_freq_change_vector_name, temp_focal_freq_change_vector)
+  print(i)
+  print(summary(temp_focal_freq_change_vector))
+  freq_change_df <- rbind(freq_change_df, data.frame(sample=rep(i, times=length(temp_focal_freq_change_vector)),
+                                                     freq_change=temp_focal_freq_change_vector))
+}
+
+pdf(file="Candidate SNP Frequency Change Boxplots.pdf",
+    width=6, height=4)
+boxplot(freq_change~sample, data=freq_change_df,
+        border=c(rep(rgb(0,0,255,100, maxColorValue=255), times=5), 
+                 rep(rgb(255,0,0,100, maxColorValue=255), times=5)),
+        ylim=c(0, 1), cex=0.6, pch=19,
+        xlab="Replicate", ylab="Frequency change for candidate SNPs")
+dev.off()
+
+
+
+
+# write test results
 
 write.table(stats_table, file="Proportion_loci_changing_in_same_dirn_as_focal_sample.txt",
             sep="\t", quote=FALSE, row.names=FALSE)
