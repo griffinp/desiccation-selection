@@ -115,6 +115,7 @@ split_fst <- function(x){
 }
 
 justchrs[,6:215] <- as.data.frame(lapply(justchrs[,6:215],FUN = function(x) {sapply(x,FUN=split_fst)}))
+justchrs$pos_in_mb <- justchrs$pos/1000000
 
 #in theory should be able to simplify this and vectorize my original function instead
 #using something like
@@ -160,26 +161,26 @@ for (i in chrs[1:5]){
   #filename <- paste(i, "coarse mean pairwise Fst.jpg", sep=" ")
   #jpeg(file=filename, width=20, height=8, units="cm", res=300)
   if (i=="2L"| i=="3L"){
-    temp_ylab <- "Pairwise Fst"
+    temp_ylab <- expression('Pairwise F'['ST'])
   }
   else temp_ylab <- ""
   if (i=="3R"| i=="3L"){
-    temp_xlab <- "Position (bp)"
+    temp_xlab <- "Position (Mb)"
   }
   else temp_xlab <- ""
-  plot(tempchr[,11]~tempchr$pos, type="l", col="pink", 
+  plot(tempchr[,11]~tempchr$pos_in_mb, type="l", col="pink", 
        ylab=temp_ylab, xlab=temp_xlab, ylim=c(0, 0.25), 
        #main=tempmain, 
        bty="l", cex.axis=1.2, lwd=0.5)
   for (j in 12:20){
-    points(tempchr[,j]~tempchr$pos, type="l", col="pink", lwd=0.5)
+    points(tempchr[,j]~tempchr$pos_in_mb, type="l", col="pink", lwd=0.5)
   }
   for (k in 27:36){
-    points(tempchr[,k]~tempchr$pos, type="l", col="lightblue", lwd=0.5)
+    points(tempchr[,k]~tempchr$pos_in_mb, type="l", col="lightblue", lwd=0.5)
   }
-  points(tempchr$D_mean~tempchr$pos, type="l", col="red")
-  points(tempchr$C_mean~tempchr$pos, type="l", col="blue")
-  text(x=max(tempchr$pos)-1000000, y=0.22, label=i, cex=2)
+  points(tempchr$D_mean~tempchr$pos_in_mb, type="l", col="red")
+  points(tempchr$C_mean~tempchr$pos_in_mb, type="l", col="blue")
+  text(x=max(tempchr$pos_in_mb)-1, y=0.22, label=i, cex=2)
   #dev.off()
 }
 dev.off()
