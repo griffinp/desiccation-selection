@@ -155,6 +155,7 @@ par(oma=c(0,0,0,0))
 plot(0,type='n',axes=FALSE,ann=FALSE)
 for (i in chrs[1:5]){
   tempchr <- subset(both_means, chr==i)
+  tempindex <- which(chrs==i)
   #tempmain <- paste("Chr", i, sep=" ")
   # use the following commented-out lines if you want to make individual jpgs per chr
   #print(paste('Plotting for', i))
@@ -181,6 +182,7 @@ for (i in chrs[1:5]){
   points(tempchr$D_mean~tempchr$pos_in_mb, type="l", col="red")
   points(tempchr$C_mean~tempchr$pos_in_mb, type="l", col="blue")
   text(x=max(tempchr$pos_in_mb)-1, y=0.22, label=i, cex=2)
+  text(x=0.5, y=0.22, label=LETTERS[tempindex+1], cex=2)
   #dev.off()
 }
 dev.off()

@@ -58,9 +58,9 @@ add_sig_or_nonsig_column <- function(sig_SNP_table, all_SNP_table){
   return(all_SNP_table[,c(1,2,6,which(colnames(all_SNP_table)=="sig_or_nonsig"))])
 }
   
-add_cumulative_pos_column <- function(all_SNP_table){
-
-  chrNum=5
+add_cumulative_pos_column <- function(all_SNP_table, include_X=TRUE){
+  if (include_X==TRUE){ chrNum <- 5 }
+  else {chrNum <- 4 }
   chrs <- c("2L", "2R", "3L", "3R", "X")
   all_SNP_table$cumulative_pos <- all_SNP_table[,2]
   new_col_location <- (which(colnames(all_SNP_table)=="cumulative_pos"))
@@ -77,7 +77,7 @@ add_cumulative_pos_column <- function(all_SNP_table){
   
   for (i in 1:chrNum){ndx <- which(all_SNP_table[, 1]==chrs[i])
                       posSub <- all_SNP_table[ndx, new_col_location]
-                      bpMidVec[i] <- ((max(posSub) - min(posSub))/2) + min(posSub)
+                      bpMidVec[i] <- ((max(posSub, na.rm=TRUE) - min(posSub, na.rm=TRUE))/2) + min(posSub, na.rm=TRUE)
   }
   print(cbind(chrs, bpMidVec))
   return(all_SNP_table)
@@ -111,13 +111,23 @@ man_plot <- function(i, SNP_table, this_fet_threshold){
     geom_hline(y=-log10(this_fet_threshold), linetype=2, col='grey', lwd=0.2) +
     xlab('') + 
     ylab(expression(paste('-log10(', italic('P'),')', sep=""), cex=4)) +
-    annotate("text", x=-100, y=30, label=LETTERS[which(Sample_code==i)], cex=4) 
+    annotate("text", x=-100, y=30, label=LETTERS[which(Sample_code==i)+1], cex=4) 
 }
+
+
 
 
 ###########
 # MAIN #
 ########
+
+
+
+
+
+
+
+################################
 
 setwd("~/Documents/Drosophila\ Selection\ Experiment/snp_and_gene_lists/")
 
